@@ -35,6 +35,7 @@ The project follows a modular architecture:
 - `SYSTEM-ROLES.md`: Linux system diversity and role definitions
 - `ARCHITECTURE-DECISIONS.md`: SystemD integration and deployment architecture
 - `LANGUAGE-EVALUATION.md`: Language comparison and Python selection rationale
+- `PROJECT-STRUCTURE.md`: Detailed project organization and module descriptions
 
 ## Development Guidelines
 
