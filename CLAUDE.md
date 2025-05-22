@@ -36,6 +36,8 @@ The project follows a modular architecture:
 - `ARCHITECTURE-DECISIONS.md`: SystemD integration and deployment architecture
 - `LANGUAGE-EVALUATION.md`: Language comparison and Python selection rationale
 - `PROJECT-STRUCTURE.md`: Detailed project organization and module descriptions
+- `TOOL-PRESENTATION.md`: Strategy for presenting tools to AI clients
+- `TOOL-HIERARCHY.md`: Progressive disclosure and tool organization
 
 ## Development Guidelines
 
