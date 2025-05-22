@@ -15,6 +15,7 @@ While Linux powers everything from vacuum cleaners to supercomputers, this serve
 
 The project follows a modular architecture:
 - **MCP Server Core**: Handles protocol, tool registration, request/response
+- **System Profiles**: Adapts to specific distros/desktops (KDE/Arch, GNOME/Ubuntu, etc.)
 - **D-Bus Manager**: Manages session/system bus connections
 - **Security Layer**: Enforces policies, whitelists safe operations
 - **Tool Implementations**: Individual tools for specific D-Bus operations
@@ -38,6 +39,7 @@ The project follows a modular architecture:
 - `PROJECT-STRUCTURE.md`: Detailed project organization and module descriptions
 - `TOOL-PRESENTATION.md`: Strategy for presenting tools to AI clients
 - `TOOL-HIERARCHY.md`: Progressive disclosure and tool organization
+- `SYSTEM-PROFILES.md`: Modular adaptation to different distros/desktop environments
 
 ## Development Guidelines
 
@@ -96,3 +98,5 @@ The project follows a modular architecture:
 - Test security policies extensively
 - Verify rate limiting works correctly
 - Test systemd socket activation
+- Test profile detection and adaptation
+- Validate each system profile independently
