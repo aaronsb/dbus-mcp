@@ -33,13 +33,18 @@ The project follows a modular architecture:
 - `USE-CASES-RANKED.md`: Prioritized capabilities by system role
 - `SERVER-FLEET-CONCEPT.md`: "Maintenance robot" model for dedicated systems
 - `SYSTEM-ROLES.md`: Linux system diversity and role definitions
+- `ARCHITECTURE-DECISIONS.md`: SystemD integration and deployment architecture
+- `LANGUAGE-EVALUATION.md`: Language comparison and Python selection rationale
 
 ## Development Guidelines
 
 ### Language: Python
-- Use `pydbus` or `dbus-python` for D-Bus integration
-- Use the MCP Python SDK
-- Follow async patterns for signal handling
+- **Python 3.9+** for modern async features
+- **pydbus** for high-level D-Bus operations
+- **mcp** (official Python SDK) for MCP protocol
+- **python-systemd** for systemd integration
+- **asyncio** for concurrent operations
+- **pydantic** for configuration validation
 
 ### Security First
 - **Never run as root** - MCP server always runs as unprivileged user
@@ -68,9 +73,23 @@ The project follows a modular architecture:
 9. `dbus.journal_query` - Log analysis
 10. `dbus.network_status` - Network state discovery
 
+## Deployment Model
+
+### SystemD Integration
+- Runs as systemd user service for desktop users
+- Optional system service for server deployments
+- Socket activation for on-demand startup
+- Integrated with journald for logging
+
+### D-Bus Self-Exposure
+- MCP server exposes `org.mcp.DBusServer` interface
+- Enables monitoring, configuration, and statistics
+- Sends signals for security events and client connections
+
 ## Testing Approach
 
 - Mock D-Bus connections for unit tests
 - Use real D-Bus for integration tests
 - Test security policies extensively
 - Verify rate limiting works correctly
+- Test systemd socket activation
