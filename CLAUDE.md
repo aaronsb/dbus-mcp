@@ -23,24 +23,30 @@ The project follows a modular architecture:
 ## Key Design Documents
 
 - `README.md`: Project overview and vision
-- `ARCHITECTURE-OVERVIEW.md`: Visual architecture and dual use cases
+- `docs/README.md`: Documentation index
+
+### Design Documents (`docs/design/`)
 - `CONCEPT.md`: High-level overview and use cases
-- `DESIGN.md`: Technical architecture and implementation details
-- `EXAMPLES.md`: Usage examples and best practices
+- `USE-CASES-RANKED.md`: Prioritized capabilities by system role
+- `SERVER-FLEET-CONCEPT.md`: "Maintenance robot" model for dedicated systems
+- `SYSTEM-ROLES.md`: Linux system diversity and role definitions
+
+### Architecture Documents (`docs/architecture/`)
+- `ARCHITECTURE-OVERVIEW.md`: Visual architecture and dual use cases
+- `ARCHITECTURE-DECISIONS.md`: SystemD integration and deployment architecture
+- `CONNECTION-ARCHITECTURE.md`: Client-server-systemd connection model
+- `SYSTEM-PROFILES.md`: Modular adaptation to different distros/desktop environments
+- `LANGUAGE-EVALUATION.md`: Language comparison and Python selection rationale
+- `PROJECT-STRUCTURE.md`: Detailed project organization and module descriptions
+
+### Implementation Guides (`docs/guides/`)
+- `TOOL-PRESENTATION.md`: Strategy for presenting tools to AI clients
+- `TOOL-HIERARCHY.md`: Progressive disclosure and tool organization
 - `SECURITY.md`: Comprehensive security architecture
 - `PRIVILEGE-MODEL.md`: Privilege separation and context handling
 - `CONTEXT-EXAMPLES.md`: Real-world context scenarios and security patterns
 - `DISCOVERED-CAPABILITIES.md`: Live system exploration findings
-- `USE-CASES-RANKED.md`: Prioritized capabilities by system role
-- `SERVER-FLEET-CONCEPT.md`: "Maintenance robot" model for dedicated systems
-- `SYSTEM-ROLES.md`: Linux system diversity and role definitions
-- `ARCHITECTURE-DECISIONS.md`: SystemD integration and deployment architecture
-- `LANGUAGE-EVALUATION.md`: Language comparison and Python selection rationale
-- `PROJECT-STRUCTURE.md`: Detailed project organization and module descriptions
-- `TOOL-PRESENTATION.md`: Strategy for presenting tools to AI clients
-- `TOOL-HIERARCHY.md`: Progressive disclosure and tool organization
-- `SYSTEM-PROFILES.md`: Modular adaptation to different distros/desktop environments
-- `CONNECTION-ARCHITECTURE.md`: Client-server-systemd connection model
+- `EXAMPLES.md`: Usage examples and best practices
 
 ## Development Guidelines
 

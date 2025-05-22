@@ -1,0 +1,61 @@
+# D-Bus MCP Server Documentation
+
+Welcome to the D-Bus MCP Server documentation. This project enables AI assistants to interact with Linux systems through D-Bus, from vacuum cleaners to supercomputers.
+
+## Documentation Structure
+
+### 📐 Design Documents
+Core concepts and use cases for the D-Bus MCP Server.
+
+- [**Concept Overview**](design/CONCEPT.md) - High-level overview and use cases
+- [**Use Cases Ranked**](design/USE-CASES-RANKED.md) - Prioritized capabilities by system role
+- [**Server Fleet Concept**](design/SERVER-FLEET-CONCEPT.md) - "Maintenance robot" model for dedicated systems
+- [**System Roles**](design/SYSTEM-ROLES.md) - Linux system diversity and role definitions
+
+### 🏗️ Architecture Documents
+Technical architecture and implementation details.
+
+- [**Architecture Overview**](architecture/ARCHITECTURE-OVERVIEW.md) - Visual architecture and dual use cases
+- [**Architecture Decisions**](architecture/ARCHITECTURE-DECISIONS.md) - SystemD integration and deployment
+- [**Connection Architecture**](architecture/CONNECTION-ARCHITECTURE.md) - Client-server-systemd connection model
+- [**System Profiles**](architecture/SYSTEM-PROFILES.md) - Modular adaptation to different distros/DEs
+- [**Language Evaluation**](architecture/LANGUAGE-EVALUATION.md) - Why Python was chosen
+- [**Project Structure**](architecture/PROJECT-STRUCTURE.md) - Code organization
+
+### 📚 Implementation Guides
+Practical guides for development and deployment.
+
+- [**Tool Presentation**](guides/TOOL-PRESENTATION.md) - Strategy for presenting tools to AI clients
+- [**Tool Hierarchy**](guides/TOOL-HIERARCHY.md) - Progressive disclosure and tool organization
+- [**Security**](guides/SECURITY.md) - Comprehensive security architecture
+- [**Privilege Model**](guides/PRIVILEGE-MODEL.md) - Privilege separation and context handling
+- [**Context Examples**](guides/CONTEXT-EXAMPLES.md) - Real-world context scenarios
+- [**Discovered Capabilities**](guides/DISCOVERED-CAPABILITIES.md) - Live system exploration findings
+- [**Examples**](guides/EXAMPLES.md) - Usage examples and best practices
+
+## Quick Links
+
+- [Back to Main README](../README.md)
+- [Development Guide (CLAUDE.md)](../CLAUDE.md)
+- [Getting Started](#getting-started)
+
+## Getting Started
+
+1. **Understand the Concept**: Start with the [Concept Overview](design/CONCEPT.md)
+2. **Review Architecture**: Check the [Architecture Overview](architecture/ARCHITECTURE-OVERVIEW.md)
+3. **Security First**: Read the [Security Guide](guides/SECURITY.md)
+4. **Try Examples**: See [Usage Examples](guides/EXAMPLES.md)
+
+## For Developers
+
+If you're contributing to the project:
+1. Read [CLAUDE.md](../CLAUDE.md) for development guidelines
+2. Understand the [Project Structure](architecture/PROJECT-STRUCTURE.md)
+3. Review [System Profiles](architecture/SYSTEM-PROFILES.md) for adaptation patterns
+
+## For Operators
+
+If you're deploying the D-Bus MCP Server:
+1. Check your [System Role](design/SYSTEM-ROLES.md)
+2. Review [Security](guides/SECURITY.md) and [Privilege Model](guides/PRIVILEGE-MODEL.md)
+3. See [Connection Architecture](architecture/CONNECTION-ARCHITECTURE.md) for deployment options
