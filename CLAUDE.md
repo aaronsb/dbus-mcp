@@ -40,6 +40,7 @@ The project follows a modular architecture:
 - `TOOL-PRESENTATION.md`: Strategy for presenting tools to AI clients
 - `TOOL-HIERARCHY.md`: Progressive disclosure and tool organization
 - `SYSTEM-PROFILES.md`: Modular adaptation to different distros/desktop environments
+- `CONNECTION-ARCHITECTURE.md`: Client-server-systemd connection model
 
 ## Development Guidelines
 
