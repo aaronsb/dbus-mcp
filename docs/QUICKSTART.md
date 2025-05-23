@@ -122,6 +122,18 @@ python -m dbus_mcp
 python -m dbus_mcp --safety-level medium
 ```
 
+## 📸 KDE Screenshot Permission (If Using KDE)
+
+If you're using KDE Plasma and want to enable screenshot functionality, you need to install the desktop entry file:
+
+```bash
+sudo cp systemd/dbus-mcp-screenshot.desktop /usr/share/applications/
+```
+
+This allows the D-Bus MCP server to request screenshot permissions through KDE's security system. You'll be prompted to authorize screenshots on first use.
+
+**📖 See [Screenshot Authorization Guide](guides/SCREENSHOT-AUTHORIZATION.md) for details**
+
 ## 🔒 Safety Levels - Choose Your Security
 
 **Before configuring AI clients**, choose your safety level based on what you want the AI to do:

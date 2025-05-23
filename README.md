@@ -116,6 +116,9 @@ systemctl --user enable dbus-mcp-standalone.service
 
 # Configure your MCP client with:
 # socat UNIX-CONNECT:$XDG_RUNTIME_DIR/dbus-mcp.sock STDIO
+
+# KDE Users: Enable screenshot permission
+sudo cp systemd/dbus-mcp-screenshot.desktop /usr/share/applications/
 ```
 
 **📖 [SystemD Mode Guide](docs/guides/SYSTEMD-MODE.md)** - Complete setup and configuration
@@ -166,6 +169,12 @@ The server can now capture screenshots through D-Bus, storing them as temporary 
 - Document UI states
 - Create visual bug reports
 - Guide users with annotated screenshots
+
+**KDE Users**: To enable screenshots, install the desktop entry file:
+```bash
+sudo cp systemd/dbus-mcp-screenshot.desktop /usr/share/applications/
+```
+See the [Screenshot Authorization Guide](docs/guides/SCREENSHOT-AUTHORIZATION.md) for details.
 
 Screenshots are stored in `~/.cache/dbus-mcp/screenshots/` with proper user permissions, ensuring privacy and persistence. See [Screenshot Authorization](docs/guides/SCREENSHOT-AUTHORIZATION.md) for KDE setup.
 
