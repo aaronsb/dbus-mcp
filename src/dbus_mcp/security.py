@@ -4,6 +4,7 @@ Security Policy Engine
 Enforces security policies for D-Bus operations.
 """
 
+import os
 import logging
 from typing import Dict, Any, Tuple, Set
 from datetime import datetime, timedelta

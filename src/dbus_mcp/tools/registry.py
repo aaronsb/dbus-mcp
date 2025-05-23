@@ -5,7 +5,7 @@ Registers MCP tools based on system profile and configuration.
 """
 
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, TYPE_CHECKING
 
 from mcp.server import FastMCP
 from mcp import Tool
@@ -13,14 +13,22 @@ from mcp.types import TextContent
 
 from ..profiles.base import SystemProfile
 
+if TYPE_CHECKING:
+    from ..security import SecurityPolicy
+
 logger = logging.getLogger(__name__)
 
 
-def register_core_tools(server: FastMCP, profile: SystemProfile):
+def register_core_tools(server: FastMCP, profile: SystemProfile, security: 'SecurityPolicy'):
     """
     Register the core set of tools that are always available.
     
     These are the minimal tools for progressive disclosure.
+    
+    Args:
+        server: The FastMCP server instance
+        profile: The system profile
+        security: The server's security policy instance
     """
     
     # 1. Help tool - always available
@@ -367,12 +375,8 @@ def register_core_tools(server: FastMCP, profile: SystemProfile):
         """
         try:
             from ..dbus_manager import DBusManager
-            from ..security import SecurityPolicy
             
-            # Security check
-            security = SecurityPolicy()
-            
-            # Check if this method call is allowed
+            # Check if this method call is allowed using the server's security policy
             if not security.is_method_allowed(service, interface, method):
                 return f"Security: Method {interface}.{method} is not allowed"
             

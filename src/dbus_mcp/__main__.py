@@ -190,8 +190,8 @@ async def async_main(args):
     mcp_server = DBusMCPServer(profile=profile, config=config)
     server = mcp_server.server
     
-    # Register tools based on profile
-    register_core_tools(server, profile)
+    # Register tools based on profile, passing the server's security policy
+    register_core_tools(server, profile, mcp_server.security)
     
     # Run appropriate mode
     if args.mode == 'stdio':
