@@ -75,6 +75,13 @@ Examples:
     )
     
     parser.add_argument(
+        '--safety-level',
+        choices=['high', 'medium', 'low'],
+        default='high',
+        help='Security safety level (default: high). Medium allows text editor and file manager operations.'
+    )
+    
+    parser.add_argument(
         '--detect',
         action='store_true',
         help='Detect and display system information, then exit'
@@ -175,8 +182,12 @@ async def async_main(args):
         for issue in issues:
             logging.warning(f"  - {issue}")
     
+    # Create server config with safety level
+    from .server import ServerConfig
+    config = ServerConfig(safety_level=args.safety_level)
+    
     # Create MCP server
-    mcp_server = DBusMCPServer(profile=profile)
+    mcp_server = DBusMCPServer(profile=profile, config=config)
     server = mcp_server.server
     
     # Register tools based on profile

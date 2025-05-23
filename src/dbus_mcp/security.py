@@ -23,7 +23,13 @@ class SecurityPolicy:
     - Rate limiting
     - Dangerous operation blocking
     - Audit logging
+    - Configurable safety levels
     """
+    
+    # Safety levels
+    SAFETY_HIGH = "high"      # Very restrictive (default)
+    SAFETY_MEDIUM = "medium"  # Allow productivity operations
+    SAFETY_LOW = "low"        # More permissive (future)
     
     # Operations that are ALWAYS forbidden
     FORBIDDEN_OPERATIONS = {
@@ -44,15 +50,29 @@ class SecurityPolicy:
         'system.service_restart': 5,
     }
     
-    def __init__(self):
-        """Initialize the security policy."""
+    def __init__(self, safety_level: str = None):
+        """
+        Initialize the security policy.
+        
+        Args:
+            safety_level: One of SAFETY_HIGH, SAFETY_MEDIUM, SAFETY_LOW
+        """
         # Rate limiting tracking
         self.operation_history: Dict[str, list] = defaultdict(list)
         
         # Audit log
         self.audit_log = []
         
-        logger.info("Security policy initialized")
+        # Set safety level with default
+        if safety_level is None:
+            safety_level = self.SAFETY_HIGH
+            
+        self.safety_level = safety_level
+        if safety_level not in [self.SAFETY_HIGH, self.SAFETY_MEDIUM, self.SAFETY_LOW]:
+            logger.warning(f"Unknown safety level: {safety_level}, defaulting to HIGH")
+            self.safety_level = self.SAFETY_HIGH
+        
+        logger.info(f"Security policy initialized with safety level: {self.safety_level}")
     
     def check_operation(
         self,
@@ -258,8 +278,8 @@ class SecurityPolicy:
             if method.startswith(prefix):
                 return True
         
-        # Allow specific safe operations
-        safe_operations = [
+        # High safety operations (always allowed)
+        high_safety_operations = [
             # Clipboard operations
             ('org.kde.klipper', 'getClipboardContents'),
             ('org.kde.klipper', 'setClipboardContents'),
@@ -280,9 +300,35 @@ class SecurityPolicy:
             ('org.kde.kwin.Screenshot', 'screenshotFullscreen'),
         ]
         
-        for safe_service, safe_method in safe_operations:
+        for safe_service, safe_method in high_safety_operations:
             if service.endswith(safe_service) and method == safe_method:
                 return True
+        
+        # Medium safety operations (allowed in MEDIUM or LOW safety)
+        if self.safety_level in [self.SAFETY_MEDIUM, self.SAFETY_LOW]:
+            medium_safety_operations = [
+                # Text editor operations
+                ('org.kde.Kate.Application', 'openInput'),
+                ('org.kde.Kate.Application', 'openUrl'),
+                ('org.kde.Kate.Application', 'setCursor'),
+                ('org.kde.Kate.Application', 'activateSession'),
+                
+                # File manager operations
+                ('org.freedesktop.FileManager1', 'ShowItems'),
+                ('org.freedesktop.FileManager1', 'ShowFolders'),
+                ('org.freedesktop.FileManager1', 'ShowItemProperties'),
+                
+                # Browser operations (opening URLs)
+                ('org.freedesktop.portal.OpenURI', 'OpenURI'),
+                
+                # Window activation (focusing apps)
+                ('org.kde.Kate.Application', 'activate'),
+                ('org.kde.KWin', 'setActiveWindow'),
+            ]
+            
+            for safe_service, safe_method in medium_safety_operations:
+                if service.endswith(safe_service) and method == safe_method:
+                    return True
         
         # Log and deny by default
         logger.info(f"Method not explicitly allowed: {service}.{interface}.{method}")

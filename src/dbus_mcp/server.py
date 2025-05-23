@@ -27,6 +27,7 @@ class ServerConfig(BaseModel):
     description: str = "D-Bus bridge for AI assistants - from vacuum cleaners to supercomputers"
     
     # Security settings
+    safety_level: str = "high"  # "high", "medium", or "low"
     rate_limit_per_minute: int = 60
     enable_system_bus: bool = True
     enable_audit_log: bool = True
@@ -72,7 +73,7 @@ class DBusMCPServer:
         self.dbus_manager = DBusManager(
             enable_system_bus=self.config.enable_system_bus
         )
-        self.security = SecurityPolicy()
+        self.security = SecurityPolicy(safety_level=self.config.safety_level)
         
         # Statistics
         self.stats = {
