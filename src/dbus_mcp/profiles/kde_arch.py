@@ -1,9 +1,12 @@
 # KDE Plasma on Arch Linux Profile
 """System profile for KDE Plasma desktop environment on Arch Linux."""
 
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 import os
+import logging
 from .base import SystemProfile
+
+logger = logging.getLogger(__name__)
 
 
 class KDEArchProfile(SystemProfile):
@@ -69,6 +72,104 @@ class KDEArchProfile(SystemProfile):
                 'adapter': 'spectacle',
                 'fallback': super().get_screenshot_config()
             }
+    
+    def process_screenshot_data(self, raw_data: bytes, metadata: Dict[str, Any]) -> Optional[bytes]:
+        """
+        Process KDE screenshot data.
+        
+        KDE's ScreenShot2 API returns raw RGBA framebuffer data, not PNG.
+        This method converts it to PNG format.
+        """
+        # Check if it's already PNG
+        if raw_data[:8] == b'\x89PNG\r\n\x1a\n':
+            return raw_data
+            
+        logger.info("Converting KDE raw RGBA screenshot to PNG")
+        logger.info(f"Metadata received: {metadata}")
+        
+        # Try to get dimensions from metadata
+        # First check the direct metadata
+        width = metadata.get('width')
+        height = metadata.get('height')
+        
+        # Check the capture_metadata field
+        if not width and 'capture_metadata' in metadata:
+            capture_meta = metadata['capture_metadata']
+            if isinstance(capture_meta, dict):
+                width = capture_meta.get('width')
+                height = capture_meta.get('height')
+        
+        # Check the result field
+        if not width and 'result' in metadata:
+            result = metadata['result']
+            if isinstance(result, dict):
+                width = result.get('width')
+                height = result.get('height')
+        
+        # If no dimensions in metadata, try common resolutions
+        if not width:
+            file_size = len(raw_data)
+            
+            # For window captures, check if there's a header
+            if metadata.get('window') == 'active' and file_size > 0xd77a0:
+                # Skip header bytes
+                header_size = 0xd77a0
+                logger.info(f"Skipping {header_size} header bytes for window capture")
+                raw_data = raw_data[header_size:]
+                file_size = len(raw_data)
+            
+            # Common resolutions
+            resolutions = [
+                (7680, 2160),  # 8K
+                (3840, 2160),  # 4K
+                (2560, 1440),  # 1440p
+                (1920, 1080),  # 1080p
+                (1366, 768),   # Common laptop
+            ]
+            
+            pixels = file_size // 4  # RGBA = 4 bytes per pixel
+            
+            # First try common resolutions
+            for w, h in resolutions:
+                if w * h == pixels:
+                    width, height = w, h
+                    logger.info(f"Detected resolution: {width}x{height}")
+                    break
+            
+            # If not found, try to find reasonable dimensions
+            if not width:
+                logger.info(f"Trying to find dimensions for {pixels} pixels")
+                # Try to factor the pixel count
+                for w in range(800, 8000):
+                    if pixels % w == 0:
+                        h = pixels // w
+                        if 400 < h < 4000:  # Reasonable height range
+                            width, height = w, h
+                            logger.info(f"Found dimensions: {width}x{height}")
+                            break
+        
+        if not width:
+            logger.error(f"Could not determine image dimensions for {len(raw_data)} bytes")
+            return None
+            
+        try:
+            from PIL import Image
+            
+            # Convert RGBA raw data to PNG
+            img = Image.frombytes('RGBA', (width, height), raw_data)
+            
+            # Save to bytes
+            import io
+            buffer = io.BytesIO()
+            img.save(buffer, 'PNG')
+            return buffer.getvalue()
+            
+        except ImportError:
+            logger.error("Pillow not installed - cannot convert screenshot")
+            return None
+        except Exception as e:
+            logger.error(f"Failed to convert screenshot: {e}")
+            return None
     
     def get_profile_specific_tools(self) -> List[str]:
         """KDE-specific tools available."""

@@ -66,6 +66,23 @@ class SystemProfile(ABC):
         """Get D-Bus pattern for media players."""
         return "org.mpris.MediaPlayer2.*"  # MPRIS2 standard
     
+    def process_screenshot_data(self, raw_data: bytes, metadata: Dict[str, Any]) -> Optional[bytes]:
+        """
+        Process raw screenshot data into a standard format.
+        
+        Different desktop environments may provide screenshot data in different formats.
+        This method allows profiles to handle their specific format.
+        
+        Args:
+            raw_data: The raw bytes from the screenshot
+            metadata: Any metadata returned by the D-Bus call
+            
+        Returns:
+            Processed image data in PNG format, or None if cannot process
+        """
+        # Default implementation assumes data is already in correct format
+        return raw_data
+    
     # Tool Availability
     
     def get_available_tools(self) -> Dict[str, bool]:

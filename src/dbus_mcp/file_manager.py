@@ -36,9 +36,10 @@ class FilePipeManager:
     and cleaning up these temporary files.
     """
     
-    def __init__(self, base_dir: str = "/tmp/dbus-mcp"):
+    def __init__(self, base_dir: str = "/tmp/dbus-mcp", profile=None):
         """Initialize the file manager with a base directory."""
         self.base_dir = Path(base_dir)
+        self.profile = profile
         try:
             # Create base directory with restrictive permissions
             self.base_dir.mkdir(exist_ok=True, mode=0o700)
@@ -128,10 +129,17 @@ class FilePipeManager:
             except OSError:
                 pass  # Already closed
         
-        # Update status and metadata
-        file_info.status = 'complete'
+        # Update metadata first so conversion has access to it
         if metadata:
             file_info.metadata.update(metadata)
+            
+        # Check if this is a screenshot that needs conversion
+        if file_info.purpose == 'screenshot' and file_info.path.endswith('.png'):
+            logger.info(f"Processing screenshot {ref_id} with metadata: {file_info.metadata}")
+            self._convert_screenshot_if_needed(file_info)
+        
+        # Update status
+        file_info.status = 'complete'
             
         # Add file size
         try:
@@ -140,6 +148,44 @@ class FilePipeManager:
             logger.info(f"Finalized {file_info.purpose} file {ref_id}: {file_size} bytes")
         except Exception as e:
             logger.warning(f"Could not get file size for {ref_id}: {e}")
+    
+    def _convert_screenshot_if_needed(self, file_info: FileInfo):
+        """
+        Convert screenshot data to PNG if needed using profile-specific processing.
+        
+        This delegates to the system profile to handle format conversion,
+        as different desktop environments may provide data in different formats.
+        """
+        if file_info.purpose != 'screenshot':
+            return
+            
+        try:
+            # Read the raw data
+            with open(file_info.path, 'rb') as f:
+                raw_data = f.read()
+            
+            # Check if already PNG
+            if raw_data[:8] == b'\x89PNG\r\n\x1a\n':
+                logger.debug(f"File {file_info.reference} is already PNG format")
+                return
+            
+            # Get the profile to process the data
+            if hasattr(self, 'profile') and self.profile:
+                logger.info(f"Using {self.profile.name} profile to process screenshot")
+                processed_data = self.profile.process_screenshot_data(raw_data, file_info.metadata)
+                
+                if processed_data and processed_data != raw_data:
+                    # Write the processed data back
+                    with open(file_info.path, 'wb') as f:
+                        f.write(processed_data)
+                    logger.info(f"Successfully processed screenshot with {self.profile.name} profile")
+                elif not processed_data:
+                    logger.error("Profile failed to process screenshot data")
+            else:
+                logger.warning("No profile available for screenshot processing")
+                
+        except Exception as e:
+            logger.error(f"Error during screenshot conversion: {e}")
     
     def mark_error(self, ref_id: str, error: str):
         """Mark a file as having an error."""

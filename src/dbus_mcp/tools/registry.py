@@ -615,11 +615,15 @@ def register_screenshot_tools(server: FastMCP, profile: SystemProfile, security:
                     fd
                 )
                 
+                # Log the result to see what metadata we get
+                logger.info(f"CaptureActiveWindow result: {result}")
+                
                 # Finalize file with metadata
                 file_manager.finalize_file(ref_id, {
                     'type': 'image/png',
                     'window': 'active',
-                    'result': result or {}
+                    'result': result or {},
+                    'capture_metadata': result  # Pass it directly too
                 })
                 
                 file_info = file_manager.get_file_info(ref_id)
@@ -685,11 +689,15 @@ def register_screenshot_tools(server: FastMCP, profile: SystemProfile, security:
                         fd
                     )
                 
+                # Log the result to see what metadata we get
+                logger.info(f"CaptureScreen result: {result}")
+                
                 # Finalize file with metadata
                 file_manager.finalize_file(ref_id, {
                     'type': 'image/png',
                     'screen': screen_name or 'active',
-                    'result': result or {}
+                    'result': result or {},
+                    'capture_metadata': result  # Pass it directly too
                 })
                 
                 file_info = file_manager.get_file_info(ref_id)

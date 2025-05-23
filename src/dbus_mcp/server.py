@@ -77,7 +77,7 @@ class DBusMCPServer:
         
         # Initialize file manager for operations that create files
         from .file_manager import FilePipeManager
-        self.file_manager = FilePipeManager()
+        self.file_manager = FilePipeManager(profile=profile)
         
         # Statistics
         self.stats = {

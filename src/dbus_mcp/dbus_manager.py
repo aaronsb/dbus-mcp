@@ -233,8 +233,18 @@ class DBusManager:
             
             if result:
                 # Result is a tuple (return_value, out_fd_list)
+                logger.info(f"D-Bus call_with_fd result tuple: {result}")
                 return_value = result[0] if result else None
                 if return_value:
+                    logger.info(f"Return value type: {type(return_value)}, value: {return_value}")
+                    # Unpack the GVariant to get the actual dictionary
+                    if hasattr(return_value, 'unpack'):
+                        unpacked = return_value.unpack()
+                        logger.info(f"Unpacked result: {unpacked}")
+                        # KDE returns a tuple with the dict inside
+                        if isinstance(unpacked, tuple) and len(unpacked) == 1:
+                            return unpacked[0]
+                        return unpacked
                     return return_value
             return None
             

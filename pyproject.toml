@@ -31,6 +31,7 @@ dependencies = [
     "pydantic>=2.0.0",
     "pydantic-settings>=2.0.0",
     "aiofiles>=23.0.0",
+    "Pillow>=10.0.0",  # For converting raw framebuffer to PNG
 ]
 
 [project.optional-dependencies]
