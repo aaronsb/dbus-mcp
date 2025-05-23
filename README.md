@@ -69,12 +69,29 @@ graph LR
     style D2 fill:#ffebee,stroke:#b71c1c,stroke-width:2px,color:#000
 ```
 
-## Security Model
+## 🔒 Security Model - Safety First
 
-- **Never runs as root**: All operations use appropriate privilege levels
-- **Three contexts**: User (default), Read-only system, Privileged helper
-- **Hard-blocked operations**: System shutdown, disk format, package management
-- **Audit trail**: All operations logged with context
+The D-Bus MCP server implements **configurable safety levels** to balance functionality with security:
+
+### 🟢 **HIGH Safety (Default)** - Safest Choice
+Essential operations with minimal risk: clipboard, notifications, media control, system monitoring
+
+### 🟡 **MEDIUM Safety** - Productivity Mode  
+Adds text editing, file management, and browser operations for AI-assisted workflows
+
+### 🔴 **LOW Safety** *(Future)* - Advanced Users
+Maximum functionality for expert users who understand the risks
+
+### ⚫ **NEVER ALLOWED** - Hard Security Boundaries
+Operations like shutdown, disk formatting, and package management are **always blocked**
+
+```bash
+# Choose your safety level
+python -m dbus_mcp --safety-level high    # Default - safest
+python -m dbus_mcp --safety-level medium  # Productivity features
+```
+
+**📖 [Complete Security Guide](docs/guides/SECURITY.md)**
 
 ## Quick Start
 

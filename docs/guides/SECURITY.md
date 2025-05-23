@@ -1,5 +1,82 @@
 # D-Bus MCP Server - Security Architecture
 
+## 🔒 Safety Levels - Security First Design
+
+The D-Bus MCP server implements a **safety-first** approach with configurable security levels. Choose the level that balances functionality with your security requirements:
+
+### 🟢 **HIGH Safety (Default)**
+**"Safest Choice"** - Recommended for most users
+- ✅ Clipboard read/write
+- ✅ Desktop notifications
+- ✅ Media player control  
+- ✅ System status monitoring
+- ✅ All read-only operations
+- ❌ Text editor injection
+- ❌ File manager control
+- ❌ URL opening
+
+```bash
+python -m dbus_mcp --safety-level high  # Default
+```
+
+### 🟡 **MEDIUM Safety**
+**"Productivity Mode"** - For users who need AI to help with desktop tasks
+- ✅ Everything in HIGH level
+- ✅ Text editor operations (Kate, etc.)
+- ✅ File manager operations (open files/folders)
+- ✅ Browser operations (open URLs)
+- ✅ Window activation/focus
+- ❌ System configuration changes
+- ❌ Service management
+
+```bash
+python -m dbus_mcp --safety-level medium
+```
+
+### 🔴 **LOW Safety** *(Future)*
+**"Advanced Users Only"** - Maximum functionality with higher risk
+- ✅ Everything in MEDIUM level
+- ✅ Network configuration (read-only)
+- ✅ Service status queries
+- ⚠️  **Not yet implemented**
+
+### ⚫ **NEVER ALLOWED** *(All Levels)*
+These operations are **hard-blocked** regardless of safety level:
+- ❌ System shutdown/reboot
+- ❌ Disk formatting
+- ❌ Package installation/removal
+- ❌ Password changes
+- ❌ Root privilege escalation
+
+```mermaid
+graph TB
+    subgraph "Safety Levels"
+        High[🟢 HIGH<br/>Safe & Secure]
+        Medium[🟡 MEDIUM<br/>Productive]
+        Low[🔴 LOW<br/>Advanced]
+        Never[⚫ NEVER<br/>Forbidden]
+    end
+    
+    High --> Medium
+    Medium --> Low
+    
+    style High fill:#c8e6c9,stroke:#2e7d32,stroke-width:3px,color:#000
+    style Medium fill:#fff9c4,stroke:#f57f17,stroke-width:3px,color:#000
+    style Low fill:#ffcdd2,stroke:#c62828,stroke-width:3px,color:#000
+    style Never fill:#424242,stroke:#000000,stroke-width:3px,color:#fff
+```
+
+## 🛡️ Why Safety Levels Matter
+
+D-Bus provides deep system access. Our safety levels ensure:
+
+1. **🟢 HIGH protects you** from accidental system interference
+2. **🟡 MEDIUM enables productivity** while maintaining boundaries
+3. **🔴 LOW offers flexibility** for advanced users who understand the risks
+4. **⚫ NEVER blocks dangerous operations** that could harm your system
+
+> **💡 Recommendation**: Start with HIGH safety and only move to MEDIUM if you specifically need AI assistance with text editing or file management.
+
 ## Security Contexts Overview
 
 ### 1. Session Bus (User Context)

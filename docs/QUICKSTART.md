@@ -93,6 +93,38 @@ journalctl --user -u dbus-mcp -f
 
 The service will automatically start when you log in.
 
+## 🔒 Safety Levels - Choose Your Security
+
+**Before configuring AI clients**, choose your safety level based on what you want the AI to do:
+
+### 🟢 **HIGH Safety (Default)** - Recommended for Most Users
+Perfect for essential desktop integration with maximum security:
+```bash
+python -m dbus_mcp --safety-level high
+```
+**Allows:** clipboard, notifications, media control, system monitoring  
+**Blocks:** text editor injection, file operations, URL opening
+
+### 🟡 **MEDIUM Safety** - Productivity Mode
+For users who want AI assistance with text editing and file management:
+```bash
+python -m dbus_mcp --safety-level medium  
+```
+**Adds:** text editor operations (Kate, etc.), file manager control, browser integration  
+**Still blocks:** system configuration, service management
+
+### ⚫ **Always Blocked** - Hard Security Boundaries
+These operations are **never allowed** regardless of safety level:
+- ❌ System shutdown/reboot
+- ❌ Disk formatting  
+- ❌ Package installation/removal
+- ❌ Password changes
+- ❌ Root privilege escalation
+
+> **💡 Recommendation:** Start with HIGH safety and only switch to MEDIUM if you specifically need AI to write text into editors or manage files.
+
+**📖 [Complete Security Guide](../guides/SECURITY.md)**
+
 ## Configuring AI Clients
 
 ### Claude Desktop
@@ -107,7 +139,20 @@ Add to your Claude Desktop configuration:
   "mcpServers": {
     "dbus": {
       "command": "/absolute/path/to/dbus-mcp/venv/bin/python",
-      "args": ["-m", "dbus_mcp"],
+      "args": ["-m", "dbus_mcp", "--safety-level", "high"],
+      "cwd": "/absolute/path/to/dbus-mcp"
+    }
+  }
+}
+```
+
+**For medium safety (text editor + file operations):**
+```json
+{
+  "mcpServers": {
+    "dbus": {
+      "command": "/absolute/path/to/dbus-mcp/venv/bin/python", 
+      "args": ["-m", "dbus_mcp", "--safety-level", "medium"],
       "cwd": "/absolute/path/to/dbus-mcp"
     }
   }
@@ -119,8 +164,11 @@ Add to your Claude Desktop configuration:
 Use the Claude CLI to add the server:
 
 ```bash
-# Add the server
-claude mcp add dbus-mcp /absolute/path/to/dbus-mcp/venv/bin/python -- -m dbus_mcp
+# Add the server with high safety (default)
+claude mcp add dbus-mcp /absolute/path/to/dbus-mcp/venv/bin/python -- -m dbus_mcp --safety-level high
+
+# Or add with medium safety for text editor integration
+claude mcp add dbus-mcp /absolute/path/to/dbus-mcp/venv/bin/python -- -m dbus_mcp --safety-level medium
 
 # Verify it was added
 claude mcp list
@@ -138,7 +186,21 @@ Add to your Continue configuration (`~/.continue/config.json`):
   "mcpServers": {
     "dbus": {
       "command": "/absolute/path/to/dbus-mcp/venv/bin/python",
-      "args": ["-m", "dbus_mcp"],
+      "args": ["-m", "dbus_mcp", "--safety-level", "high"],
+      "cwd": "/absolute/path/to/dbus-mcp"
+    }
+  }
+}
+```
+
+**For medium safety:**
+```json
+{
+  "models": [...],
+  "mcpServers": {
+    "dbus": {
+      "command": "/absolute/path/to/dbus-mcp/venv/bin/python",
+      "args": ["-m", "dbus_mcp", "--safety-level", "medium"],
       "cwd": "/absolute/path/to/dbus-mcp"
     }
   }
