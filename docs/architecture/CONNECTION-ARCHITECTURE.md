@@ -2,11 +2,26 @@
 
 ## Overview: Three Components
 
-```
-┌─────────────────────────┐         ┌──────────────────────┐         ┌─────────────────────┐
-│     AI Client           │ stdio   │   dbus-mcp binary    │ D-Bus   │   Linux System      │
-│ (Claude, Cline, etc)    │◄──────►│  (MCP Server)        │◄──────►│  Services & Desktop │
-└─────────────────────────┘         └──────────────────────┘         └─────────────────────┘
+```mermaid
+graph LR
+    subgraph "AI Assistant"
+        Client[fa:fa-robot AI Client<br/>Claude, Cline, Cursor]
+    end
+    
+    subgraph "Bridge Layer"
+        MCP[fa:fa-exchange-alt dbus-mcp binary<br/>MCP Server]
+    end
+    
+    subgraph "Linux System"
+        Services[fa:fa-linux Linux Services<br/>Desktop & System]
+    end
+    
+    Client <-->|"stdio<br/>JSON-RPC"| MCP
+    MCP <-->|"D-Bus<br/>Session/System"| Services
+    
+    style Client fill:#e3f2fd,stroke:#1976d2,stroke-width:3px,color:#000
+    style MCP fill:#f3e5f5,stroke:#7b1fa2,stroke-width:3px,color:#000
+    style Services fill:#e8f5e9,stroke:#388e3c,stroke-width:3px,color:#000
 ```
 
 ## Component Definitions
@@ -46,8 +61,30 @@
 
 ### Scenario: AI Reads Clipboard
 
+```mermaid
+sequenceDiagram
+    participant User
+    participant Claude as Claude Desktop
+    participant MCP as dbus-mcp
+    participant DBus as D-Bus Session
+    participant KDE as Klipper Service
+    
+    User->>Claude: "What's in my clipboard?"
+    Claude->>MCP: {"method": "tools/call",<br/>"params": {"name": "clipboard_read"}}
+    MCP->>MCP: Check security policy
+    MCP->>DBus: Connect to session bus
+    DBus->>MCP: Connection established
+    MCP->>KDE: getClipboardContents()
+    KDE->>MCP: "Hello World"
+    MCP->>Claude: {"result": {"content": [{<br/>"type": "text",<br/>"text": "Hello World"}]}}
+    Claude->>User: "Your clipboard contains: Hello World"
+    
+    style User fill:#e8eaf6,stroke:#3f51b5,stroke-width:2px,color:#000
+    style Claude fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000
+    style MCP fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000
+    style DBus fill:#fff8e1,stroke:#f57c00,stroke-width:2px,color:#000
+    style KDE fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#000
 ```
-1. User asks Claude: "What's in my clipboard?"
    
 2. Claude Desktop invokes MCP tool:
    → {"method": "tools/call", "params": {"name": "dbus.clipboard.read"}}

@@ -2,12 +2,64 @@
 
 ## Proposed Tool Structure
 
-### Level 0: Discovery Tool (Always Available)
+```mermaid
+graph TD
+    subgraph "Level 0: Discovery"
+        Help[fa:fa-question-circle dbus.help<br/>Get help & capabilities]
+    end
+    
+    subgraph "Level 1: Core Tools"
+        Notify[fa:fa-bell dbus.notify<br/>Desktop notifications]
+        ClipR[fa:fa-clipboard dbus.clipboard.read<br/>Read clipboard]
+        ClipW[fa:fa-paste dbus.clipboard.write<br/>Write clipboard]
+        Status[fa:fa-info-circle dbus.status<br/>System overview]
+        Discover[fa:fa-search dbus.discover<br/>Explore categories]
+    end
+    
+    subgraph "Level 2: Categories"
+        Desktop[fa:fa-desktop Desktop Tools<br/>8 tools]
+        Media[fa:fa-music Media Tools<br/>5 tools]
+        System[fa:fa-cogs System Tools<br/>7 tools]
+    end
+    
+    subgraph "Level 3: Advanced"
+        Raw[fa:fa-terminal Raw D-Bus<br/>5 expert tools]
+    end
+    
+    Help --> Notify
+    Help --> ClipR
+    Help --> ClipW
+    Help --> Status
+    Help --> Discover
+    
+    Discover -->|"Reveals"| Desktop
+    Discover -->|"Reveals"| Media
+    Discover -->|"Reveals"| System
+    
+    Desktop -->|"Expert Mode"| Raw
+    Media -->|"Expert Mode"| Raw
+    System -->|"Expert Mode"| Raw
+    
+    style Help fill:#e1f5fe,stroke:#01579b,stroke-width:3px,color:#000
+    style Discover fill:#fff3e0,stroke:#e65100,stroke-width:3px,color:#000
+    
+    classDef core fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000
+    classDef category fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#000
+    classDef advanced fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#000
+    
+    class Notify,ClipR,ClipW,Status core
+    class Desktop,Media,System category
+    class Raw advanced
+```
+
+### Tool Details
+
+#### Level 0: Discovery Tool (Always Available)
 ```
 dbus.help - Get help about available D-Bus capabilities
 ```
 
-### Level 1: Core Tools (5 tools)
+#### Level 1: Core Tools (5 tools)
 These are always presented to the AI:
 
 ```

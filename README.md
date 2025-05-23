@@ -38,8 +38,35 @@ For systems with specific purposes (web servers, routers, NAS, IoT devices), AI 
 
 The MCP server acts as a bridge between AI assistants and the D-Bus system:
 
-```
-AI Assistant <-> MCP Protocol <-> D-Bus MCP Server <-> D-Bus (Session/System)
+```mermaid
+graph LR
+    subgraph "AI Layer"
+        A[fa:fa-robot AI Assistant<br/>Claude, GPT, etc.]
+    end
+    
+    subgraph "Protocol Layer"
+        B[fa:fa-exchange-alt MCP Protocol<br/>JSON-RPC over stdio/SSE]
+    end
+    
+    subgraph "Bridge Layer"
+        C[fa:fa-server D-Bus MCP Server<br/>Security & Translation]
+    end
+    
+    subgraph "System Layer"
+        D1[fa:fa-desktop Session Bus<br/>Desktop Services]
+        D2[fa:fa-cog System Bus<br/>System Services]
+    end
+    
+    A <-->|"Tools & Resources"| B
+    B <-->|"Request/Response"| C
+    C <-->|"Method Calls"| D1
+    C <-->|"Monitoring"| D2
+    
+    style A fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000
+    style B fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#000
+    style C fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#000
+    style D1 fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
+    style D2 fill:#ffebee,stroke:#b71c1c,stroke-width:2px,color:#000
 ```
 
 ## Security Model
