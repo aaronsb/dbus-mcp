@@ -89,6 +89,10 @@ def register_core_tools(server: FastMCP, profile: SystemProfile):
             urgency_int = urgency_map.get(urgency, 1)
             
             # Send notification
+            # For pydbus, we need to use GLib.Variant for the hints
+            from gi.repository import GLib
+            hints = {'urgency': GLib.Variant('y', urgency_int)}
+            
             notification_id = notifier.Notify(
                 'dbus-mcp',      # app_name
                 0,               # replaces_id
@@ -96,7 +100,7 @@ def register_core_tools(server: FastMCP, profile: SystemProfile):
                 title,           # summary
                 message,         # body
                 [],              # actions
-                {'urgency': urgency_int},  # hints
+                hints,           # hints with GLib.Variant
                 5000             # timeout (ms)
             )
             
@@ -456,7 +460,14 @@ def register_clipboard_tools(server: FastMCP, profile: SystemProfile):
                 method_name = config['methods']['read']
                 contents = getattr(klipper, method_name)()
                 
-                return contents if contents else "(empty)"
+                # Check if we got text content
+                if contents:
+                    return contents
+                else:
+                    # Klipper returns empty string for non-text content
+                    # Try to detect what's actually in the clipboard
+                    # For now, indicate that non-text content was detected
+                    return "(clipboard contains non-text content - image support coming soon)"
             else:
                 # Generic portal or other adapter
                 return "Clipboard adapter not yet implemented"
