@@ -308,27 +308,27 @@ class SecurityPolicy:
         # Medium safety operations (allowed in MEDIUM or LOW safety)
         if self.safety_level in [self.SAFETY_MEDIUM, self.SAFETY_LOW]:
             medium_safety_operations = [
-                # Text editor operations
-                ('org.kde.Kate.Application', 'openInput'),
-                ('org.kde.Kate.Application', 'openUrl'),
-                ('org.kde.Kate.Application', 'setCursor'),
-                ('org.kde.Kate.Application', 'activateSession'),
+                # Text editor operations (Kate)
+                ('org.kde.kate', 'org.kde.Kate.Application', 'openInput'),
+                ('org.kde.kate', 'org.kde.Kate.Application', 'openUrl'),
+                ('org.kde.kate', 'org.kde.Kate.Application', 'setCursor'),
+                ('org.kde.kate', 'org.kde.Kate.Application', 'activateSession'),
+                ('org.kde.kate', 'org.kde.Kate.Application', 'activate'),
                 
                 # File manager operations
-                ('org.freedesktop.FileManager1', 'ShowItems'),
-                ('org.freedesktop.FileManager1', 'ShowFolders'),
-                ('org.freedesktop.FileManager1', 'ShowItemProperties'),
+                ('org.freedesktop.FileManager1', 'org.freedesktop.FileManager1', 'ShowItems'),
+                ('org.freedesktop.FileManager1', 'org.freedesktop.FileManager1', 'ShowFolders'),
+                ('org.freedesktop.FileManager1', 'org.freedesktop.FileManager1', 'ShowItemProperties'),
                 
                 # Browser operations (opening URLs)
-                ('org.freedesktop.portal.OpenURI', 'OpenURI'),
+                ('org.freedesktop.portal.OpenURI', 'org.freedesktop.portal.OpenURI', 'OpenURI'),
                 
-                # Window activation (focusing apps)
-                ('org.kde.Kate.Application', 'activate'),
-                ('org.kde.KWin', 'setActiveWindow'),
+                # Window manager operations
+                ('org.kde.KWin', 'org.kde.KWin', 'setActiveWindow'),
             ]
             
-            for safe_service, safe_method in medium_safety_operations:
-                if service.endswith(safe_service) and method == safe_method:
+            for safe_service, safe_interface, safe_method in medium_safety_operations:
+                if service.startswith(safe_service) and interface == safe_interface and method == safe_method:
                     return True
         
         # Log and deny by default

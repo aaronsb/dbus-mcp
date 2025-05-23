@@ -89,6 +89,62 @@ class KDEArchProfile(SystemProfile):
             
         return tools
     
+    def get_safety_level_capabilities(self) -> Dict[str, Dict[str, List[str]]]:
+        """
+        Describe what capabilities are available at each safety level.
+        
+        Returns a clear, user-friendly description of what can be done.
+        """
+        return {
+            'high': {
+                'description': '🟢 Read-only operations and user notifications',
+                'capabilities': [
+                    '📋 Read/write clipboard text',
+                    '🔔 Send desktop notifications', 
+                    '🎵 Control media playback',
+                    '📊 Read system status (battery, network)',
+                    '🔍 Discover available services',
+                    '📖 Read application states'
+                ],
+                'examples': [
+                    'Get clipboard contents',
+                    'Show notification "Task completed"',
+                    'Pause currently playing media'
+                ]
+            },
+            'medium': {
+                'description': '🟡 Productivity operations (recommended for development)',
+                'capabilities': [
+                    '✏️ Send text to editors (Kate, KWrite)',
+                    '📁 Open files/folders in Dolphin',
+                    '🌐 Open URLs in browser',
+                    '🪟 Focus and activate windows',
+                    '📸 Take screenshots (with user consent)',
+                    '⌨️ Simulate keyboard input to active window'
+                ],
+                'examples': [
+                    'Write code directly to Kate',
+                    'Show project folder in file manager',
+                    'Open documentation in browser'
+                ]
+            },
+            'low': {
+                'description': '🔴 System administration (use with caution)',
+                'capabilities': [
+                    '⚙️ Start/stop/restart services',
+                    '🔧 Modify system settings',
+                    '📦 Query package information',
+                    '🖥️ Control display settings',
+                    '🔐 Manage system connections'
+                ],
+                'examples': [
+                    'Restart a crashed service',
+                    'Change display brightness',
+                    'Check for system updates'
+                ]
+            }
+        }
+    
     def get_power_management_config(self) -> Dict[str, Any]:
         """KDE uses PowerDevil for power management."""
         return {

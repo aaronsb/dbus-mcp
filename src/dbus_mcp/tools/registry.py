@@ -37,9 +37,15 @@ def register_core_tools(server: FastMCP, profile: SystemProfile, security: 'Secu
         """Get help about available D-Bus capabilities and tools."""
         available = profile.get_available_tools()
         
+        # Safety level indicator
+        safety_icons = {'high': '🟢', 'medium': '🟡', 'low': '🔴'}
+        current_safety = security.safety_level
+        safety_icon = safety_icons.get(current_safety, '❓')
+        
         help_text = [
             "D-Bus MCP Server - Available Capabilities",
             f"Profile: {profile.name} - {profile.description}",
+            f"Safety Level: {safety_icon} {current_safety.upper()}",
             "",
             "Core Tools:",
             "- help: Show this help message",
@@ -49,21 +55,40 @@ def register_core_tools(server: FastMCP, profile: SystemProfile, security: 'Secu
             "- list_services: List all D-Bus services",
             "- introspect: Explore service interfaces and methods",
             "- call_method: Call arbitrary D-Bus methods",
-            "",
-            "Available Categories:"
+            ""
         ]
         
-        for category, enabled in available.items():
-            status = "✓" if enabled else "✗"
-            help_text.append(f"  {status} {category}")
+        # Show capabilities for current safety level if profile supports it
+        if hasattr(profile, 'get_safety_level_capabilities'):
+            capabilities = profile.get_safety_level_capabilities()
+            if current_safety in capabilities:
+                level_info = capabilities[current_safety]
+                help_text.extend([
+                    f"Current Safety Level - {level_info['description']}:",
+                    ""
+                ])
+                for capability in level_info['capabilities']:
+                    help_text.append(f"  {capability}")
+                help_text.append("")
+        else:
+            # Fallback to category display
+            help_text.append("Available Categories:")
+            for category, enabled in available.items():
+                status = "✓" if enabled else "✗"
+                help_text.append(f"  {status} {category}")
+            help_text.append("")
         
         if profile.get_profile_specific_tools():
             help_text.extend([
-                "",
                 "Profile-Specific Tools:",
             ])
             for tool in profile.get_profile_specific_tools():
                 help_text.append(f"  - {tool}")
+        
+        help_text.extend([
+            "",
+            f"To change safety level, restart with: --safety-level medium"
+        ])
         
         return "\n".join(help_text)
     
