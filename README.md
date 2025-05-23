@@ -136,7 +136,7 @@ The server starts with essential tools for D-Bus interaction:
 10. **`capture_screen`** - Screenshot entire screen 📸
 11. **`list_screenshot_files`** - List captured screenshots
 
-### 📸 Screenshot Capability (New!)
+### 📸 Screenshot Capability
 The server can now capture screenshots through D-Bus, storing them as temporary files with reference IDs. This enables AI assistants to:
 - Capture windows or screens for visual context
 - Document UI states
@@ -177,7 +177,7 @@ Screenshots are stored in `/tmp/dbus-mcp/` and tracked with metadata. See [Scree
 - ✅ Progressive tool disclosure
 
 ### Coming Soon:
-- 🔄 More desktop tools (screenshots, media control)
+- 🔄 More desktop tools (media control, window management)
 - 🔄 SystemD service integration  
 - 🔄 Server fleet management tools
 - 🔄 Additional system profiles (GNOME, Sway, etc.)
