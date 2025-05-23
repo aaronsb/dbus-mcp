@@ -1,5 +1,5 @@
 [Unit]
-Description=D-Bus Model Context Protocol Server
+Description=D-Bus Model Context Protocol Server (instance %i)
 Documentation=https://github.com/aaronsb/dbus-mcp
 After=graphical-session.target
 
@@ -10,12 +10,11 @@ StandardInput=socket
 StandardOutput=socket
 StandardError=journal
 
-# Use socat to bridge socket to stdio
-ExecStart=/usr/bin/socat FD:0 SYSTEM:"/usr/local/bin/dbus-mcp-socket-wrapper"
+# Use the wrapper script which loads config
+ExecStart=/usr/local/bin/dbus-mcp-socket-wrapper
 
-# Don't restart on normal exit
-Restart=on-failure
-RestartSec=5
+# Don't restart instance services
+Restart=no
 
 # Security hardening
 NoNewPrivileges=true

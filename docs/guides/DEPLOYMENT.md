@@ -4,28 +4,107 @@ This guide covers the different ways to deploy and run the D-Bus MCP server.
 
 ## Overview
 
-The D-Bus MCP server supports two primary deployment modes:
+The D-Bus MCP server supports two deployment modes:
 
-1. **Development Mode** - Direct stdio communication, perfect for testing and development
-2. **Production Mode** - SystemD socket activation for persistent service
+1. **Production Mode (Recommended)** - SystemD service with Unix socket for reliability and security
+2. **Development Mode** - Direct stdio communication for testing and development
 
 ## Quick Start
+
+### 🚀 Recommended: Production Installation
 
 ```bash
 # Clone the repository
 git clone https://github.com/aaronsb/dbus-mcp.git
 cd dbus-mcp
 
-# For development mode only
-./quickstart.sh
+# Install with systemd service (recommended)
+./install.sh --prod-only
 
-# For full installation (both modes)
-./install.sh
+# Configure and start
+sudo nano /etc/dbus-mcp/config  # Set SAFETY_LEVEL="medium"
+systemctl --user start dbus-mcp-standalone.service
+systemctl --user enable dbus-mcp-standalone.service
+```
+
+### Development Installation
+
+```bash
+# For development/testing only
+./quickstart.sh
+```
+
+## Production Mode (Recommended)
+
+**📖 For detailed systemd setup, see the [SystemD Mode Guide](SYSTEMD-MODE.md)**
+
+Production mode runs D-Bus MCP as a systemd service with Unix socket communication. This is the **recommended deployment method** for all production use.
+
+### Why Production Mode?
+
+✅ **Reliability** - Automatic restart on crashes  
+✅ **Security** - SystemD sandboxing and resource limits  
+✅ **Management** - Standard systemctl commands  
+✅ **Logging** - Full journald integration  
+✅ **Multi-client** - Handle multiple connections  
+
+### Quick Setup
+
+```bash
+# Install production components
+./install.sh --prod-only
+
+# This installs:
+# - Standalone executable: /usr/local/bin/dbus-mcp
+# - Socket wrapper: /usr/local/bin/dbus-mcp-socket-wrapper  
+# - Config file: /etc/dbus-mcp/config
+# - SystemD service: ~/.config/systemd/user/dbus-mcp-standalone.service
+```
+
+### Configuration
+
+Edit `/etc/dbus-mcp/config`:
+
+```bash
+# Safety level (high, medium, or low)
+SAFETY_LEVEL="medium"
+```
+
+### Starting the Service
+
+```bash
+# Start the service
+systemctl --user start dbus-mcp-standalone.service
+
+# Enable automatic startup
+systemctl --user enable dbus-mcp-standalone.service
+
+# Check status
+systemctl --user status dbus-mcp-standalone.service
+```
+
+### Connecting Clients
+
+Configure your MCP client to use the Unix socket:
+
+```json
+{
+  "mcpServers": {
+    "dbus-mcp": {
+      "command": "socat",
+      "args": ["UNIX-CONNECT:$XDG_RUNTIME_DIR/dbus-mcp.sock", "STDIO"]
+    }
+  }
+}
 ```
 
 ## Development Mode
 
-Development mode runs the server directly with stdio communication. This is how Claude Code and other MCP clients typically connect during development.
+Development mode runs the server directly with stdio communication. This mode is suitable for:
+- Testing and debugging
+- Development of new features
+- Quick experiments
+- Environments without systemd
 
 ### Setup
 
@@ -58,84 +137,13 @@ Development mode runs the server directly with stdio communication. This is how 
 }
 ```
 
-### Advantages
-- Simple setup
-- Direct console output for debugging
-- Easy to restart and modify
-- No systemd required
+### When to Use Development Mode
 
-## Production Mode
-
-Production mode uses systemd socket activation for on-demand startup and persistent service.
-
-### Setup
-
-```bash
-# Install production components
-./install.sh --prod-only
-
-# Or install everything
-./install.sh
-
-# This installs:
-# - Standalone executable: /usr/local/bin/dbus-mcp
-# - Socket wrapper: /usr/local/bin/dbus-mcp-socket-wrapper
-# - Config file: /etc/dbus-mcp/config
-# - SystemD units: ~/.config/systemd/user/dbus-mcp.*
-```
-
-### Configuration
-
-Edit `/etc/dbus-mcp/config` to set safety level and options:
-
-```bash
-# Safety level for production
-SAFETY_LEVEL="medium"
-
-# Optional: Additional arguments
-EXTRA_ARGS="--log-level info"
-```
-
-### Starting the Service
-
-```bash
-# Enable socket activation (starts on demand)
-systemctl --user enable dbus-mcp.socket
-systemctl --user start dbus-mcp.socket
-
-# Check status
-systemctl --user status dbus-mcp.socket
-systemctl --user status dbus-mcp.service
-```
-
-### Connecting Clients
-
-For MCP clients to connect to the socket-activated service:
-
-```bash
-# Use the provided client wrapper
-/usr/local/bin/dbus-mcp-client
-
-# Or use socat directly
-socat UNIX-CONNECT:$XDG_RUNTIME_DIR/dbus-mcp.sock STDIO
-
-# In Claude Code config (with socat)
-{
-  "mcpServers": {
-    "dbus-mcp": {
-      "command": "socat",
-      "args": ["UNIX-CONNECT:/run/user/1000/dbus-mcp.sock", "STDIO"]
-    }
-  }
-}
-```
-
-### Advantages
-- Starts on demand
-- Survives client disconnections
-- Central configuration
-- System integration
-- Can run as system service for multiple users
+✅ During active development  
+✅ For debugging and testing  
+✅ In environments without systemd  
+❌ NOT for production use  
+❌ NOT for multi-client scenarios  
 
 ## Installation Details
 

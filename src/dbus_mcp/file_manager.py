@@ -36,13 +36,19 @@ class FilePipeManager:
     and cleaning up these temporary files.
     """
     
-    def __init__(self, base_dir: str = "/tmp/dbus-mcp", profile=None):
+    def __init__(self, base_dir: str = None, profile=None):
         """Initialize the file manager with a base directory."""
+        if base_dir is None:
+            # Use XDG cache directory for user-specific storage
+            cache_home = os.environ.get('XDG_CACHE_HOME', os.path.expanduser('~/.cache'))
+            base_dir = os.path.join(cache_home, 'dbus-mcp', 'screenshots')
+        
         self.base_dir = Path(base_dir)
         self.profile = profile
         try:
             # Create base directory with restrictive permissions
-            self.base_dir.mkdir(exist_ok=True, mode=0o700)
+            # Use parents=True to create intermediate directories
+            self.base_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
             logger.info(f"File manager initialized with base directory: {self.base_dir}")
         except Exception as e:
             logger.error(f"Failed to create base directory: {e}")

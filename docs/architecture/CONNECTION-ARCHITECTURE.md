@@ -107,26 +107,37 @@ sequenceDiagram
 
 ## Deployment Models
 
-### Model 1: Direct Execution (Development/Simple Use)
+### Model 1: SystemD User Service with Unix Socket (Recommended)
+
+**🚀 This is the recommended production deployment method.**
+
+```bash
+# dbus-mcp runs as persistent user service
+systemctl --user start dbus-mcp-standalone.service
+
+# AI clients connect via Unix socket with socat bridge
+claude-desktop → socat → /run/user/1000/dbus-mcp.sock → dbus-mcp
+```
+
+**Pros**: 
+- ✅ Single instance, resource efficient
+- ✅ Automatic startup and restart
+- ✅ Full systemd security hardening
+- ✅ Centralized configuration
+- ✅ Supports multiple concurrent clients
+
+**Cons**: Requires installation and systemd
+
+**📖 See [SystemD Mode Guide](../guides/SYSTEMD-MODE.md) for setup instructions**
+
+### Model 2: Direct Execution (Development Mode)
 ```bash
 # AI client launches dbus-mcp directly
-claude-desktop → spawns → python -m dbus_mcp.server
+claude-desktop → spawns → python -m dbus_mcp
 ```
 
 **Pros**: Simple, no installation needed
-**Cons**: New process per session
-
-### Model 2: SystemD User Service (Recommended)
-```bash
-# dbus-mcp runs as persistent user service
-systemctl --user start dbus-mcp.service
-
-# AI clients connect via socket
-claude-desktop → connects to → /run/user/1000/dbus-mcp.socket
-```
-
-**Pros**: Single instance, resource efficient, socket activation
-**Cons**: Requires installation
+**Cons**: New process per session, no persistence
 
 ### Model 3: System Service (Server Mode)
 ```bash

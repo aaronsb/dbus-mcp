@@ -5,6 +5,7 @@ Welcome to the D-Bus MCP Server documentation. This project enables AI assistant
 ## 🚀 Getting Started
 
 - **[Quick Start Guide](QUICKSTART.md)** - Get up and running in minutes
+- **[SystemD Mode Guide](guides/SYSTEMD-MODE.md)** - 🔥 **Recommended** production deployment with Unix socket
 - **[Installation Guide](QUICKSTART.md#installation)** - Detailed installation instructions  
 - **[Configuration Examples](QUICKSTART.md#configuring-ai-clients)** - Set up Claude Desktop, Claude Code, and VS Code
 - **[Troubleshooting](QUICKSTART.md#troubleshooting)** - Common issues and solutions
@@ -18,6 +19,7 @@ Core concepts and use cases for the D-Bus MCP Server.
 - [**Use Cases Ranked**](design/USE-CASES-RANKED.md) - Prioritized capabilities by system role
 - [**Server Fleet Concept**](design/SERVER-FLEET-CONCEPT.md) - "Maintenance robot" model for dedicated systems
 - [**System Roles**](design/SYSTEM-ROLES.md) - Linux system diversity and role definitions
+- [**🚀 Roadmap**](ROADMAP.md) - Future features and development priorities
 
 ### 🏗️ Architecture Documents
 Technical architecture and implementation details.
@@ -34,6 +36,7 @@ Technical architecture and implementation details.
 ### 📚 Implementation Guides
 Practical guides for development and deployment.
 
+- [**SystemD Mode**](guides/SYSTEMD-MODE.md) - 🔥 **Recommended** production deployment with Unix socket
 - [**Deployment**](guides/DEPLOYMENT.md) - 🚀 Development vs production deployment options
 - [**Tool Presentation**](guides/TOOL-PRESENTATION.md) - Strategy for presenting tools to AI clients
 - [**Tool Hierarchy**](guides/TOOL-HIERARCHY.md) - Progressive disclosure and tool organization
@@ -69,6 +72,7 @@ If you're contributing to the project:
 ## For Operators
 
 If you're deploying the D-Bus MCP Server:
-1. Check your [System Role](design/SYSTEM-ROLES.md)
-2. Review [Security](guides/SECURITY.md) and [Privilege Model](guides/PRIVILEGE-MODEL.md)
-3. See [Connection Architecture](architecture/CONNECTION-ARCHITECTURE.md) for deployment options
+1. Start with [SystemD Mode](guides/SYSTEMD-MODE.md) for production deployment
+2. Check your [System Role](design/SYSTEM-ROLES.md)
+3. Review [Security](guides/SECURITY.md) and [Privilege Model](guides/PRIVILEGE-MODEL.md)
+4. See [Connection Architecture](architecture/CONNECTION-ARCHITECTURE.md) for advanced options

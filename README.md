@@ -97,23 +97,47 @@ python -m dbus_mcp --safety-level medium  # Productivity features
 
 **📖 [Complete Quick Start Guide](docs/QUICKSTART.md)**
 
+### 🚀 Recommended: Production Installation with systemd
+
+For production use, we recommend running D-Bus MCP as a systemd service with Unix socket support:
+
 ```bash
-# Clone and install
+# Clone and install with systemd service
 git clone https://github.com/aaronsb/dbus-mcp.git
 cd dbus-mcp
+./install.sh --prod-only
+
+# Configure safety level
+sudo nano /etc/dbus-mcp/config  # Set SAFETY_LEVEL="medium"
+
+# Start the service
+systemctl --user start dbus-mcp-standalone.service
+systemctl --user enable dbus-mcp-standalone.service
+
+# Configure your MCP client with:
+# socat UNIX-CONNECT:$XDG_RUNTIME_DIR/dbus-mcp.sock STDIO
+```
+
+**📖 [SystemD Mode Guide](docs/guides/SYSTEMD-MODE.md)** - Complete setup and configuration
+
+### 🛠️ Alternative: Development Mode
+
+For development or testing, you can run directly:
+
+```bash
+# Quick development setup
 ./quickstart.sh
 
 # Test the installation
 python test_installation.py
 
-# Optional: Install as systemd service
-./scripts/install-service.sh
+# Run directly
+python -m dbus_mcp --safety-level medium
 ```
 
 The Quick Start Guide includes:
 - System requirements and prerequisites
-- Multiple installation methods
-- Systemd service setup
+- Multiple installation methods (systemd recommended for production)
 - Configuration for Claude Desktop, Claude Code, and VS Code
 - Troubleshooting tips
 
@@ -143,7 +167,7 @@ The server can now capture screenshots through D-Bus, storing them as temporary 
 - Create visual bug reports
 - Guide users with annotated screenshots
 
-Screenshots are stored in `/tmp/dbus-mcp/` and tracked with metadata. See [Screenshot Authorization](docs/guides/SCREENSHOT-AUTHORIZATION.md) for KDE setup.
+Screenshots are stored in `~/.cache/dbus-mcp/screenshots/` with proper user permissions, ensuring privacy and persistence. See [Screenshot Authorization](docs/guides/SCREENSHOT-AUTHORIZATION.md) for KDE setup.
 
 ## Documentation
 
@@ -171,16 +195,21 @@ Screenshots are stored in `/tmp/dbus-mcp/` and tracked with metadata. See [Scree
 
 ### What's Working:
 - ✅ Core MCP server with stdio transport
+- ✅ SystemD service integration with Unix socket support
 - ✅ System profile auto-detection (KDE/Arch tested)
 - ✅ Basic tools: notify, clipboard, status, help
+- ✅ Screenshot capability with file management
 - ✅ Security policies and rate limiting
 - ✅ Progressive tool disclosure
 
-### Coming Soon:
-- 🔄 More desktop tools (media control, window management)
-- 🔄 SystemD service integration  
-- 🔄 Server fleet management tools
-- 🔄 Additional system profiles (GNOME, Sway, etc.)
+### 🚀 Roadmap
+See our comprehensive [**Development Roadmap**](docs/ROADMAP.md) for planned features including:
+- 🎵 Media control and window management
+- 🖥️ Server fleet management tools  
+- 🐧 GNOME, Sway, and Ubuntu profiles
+- 🔌 Native socket support
+- 🤖 AI-specific enhancements
+- And much more!
 
 ## License
 

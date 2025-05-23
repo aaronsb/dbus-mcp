@@ -1,5 +1,72 @@
 # D-Bus MCP Server - Usage Examples
 
+## Setup Examples
+
+### SystemD Mode (Recommended for Production)
+
+```bash
+# Install and start the service
+./install.sh --prod-only
+sudo nano /etc/dbus-mcp/config  # Set SAFETY_LEVEL="medium"
+systemctl --user start dbus-mcp-standalone.service
+systemctl --user enable dbus-mcp-standalone.service
+
+# Configure Claude Desktop
+# Add to ~/.config/claude/claude_desktop_config.json:
+{
+  "mcpServers": {
+    "dbus": {
+      "command": "socat",
+      "args": ["UNIX-CONNECT:$XDG_RUNTIME_DIR/dbus-mcp.sock", "STDIO"]
+    }
+  }
+}
+```
+
+### Development Mode
+
+```bash
+# Quick development setup
+./quickstart.sh
+source venv/bin/activate
+
+# Configure Claude Desktop for development
+# Add to ~/.config/claude/claude_desktop_config.json:
+{
+  "mcpServers": {
+    "dbus": {
+      "command": "/path/to/dbus-mcp/venv/bin/python",
+      "args": ["-m", "dbus_mcp", "--safety-level", "medium"]
+    }
+  }
+}
+```
+
+### Verifying Your Installation
+
+#### For SystemD Mode:
+```bash
+# Check service status
+systemctl --user status dbus-mcp-standalone.service
+
+# Test the connection manually
+echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | \
+  socat - UNIX-CONNECT:$XDG_RUNTIME_DIR/dbus-mcp.sock
+
+# View logs
+journalctl --user -u dbus-mcp-standalone.service -f
+```
+
+#### For Development Mode:
+```bash
+# Test directly
+python -m dbus_mcp --check-requirements
+
+# Run interactive test
+echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | \
+  python -m dbus_mcp
+```
+
 ## Example Use Cases
 
 ### 1. Desktop Automation Workflow

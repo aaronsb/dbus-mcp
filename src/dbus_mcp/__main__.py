@@ -21,6 +21,7 @@ from .server import DBusMCPServer
 from .profiles import load_profile, ProfileDetector
 from .tools.registry import register_core_tools
 from .system_requirements import check_and_warn
+from .systemd_server import setup_systemd_stdio, restore_stdio
 
 
 def setup_logging(level: str = "INFO"):
@@ -146,11 +147,23 @@ def detect_and_display():
 
 async def run_stdio_server(server: FastMCP, profile):
     """Run the MCP server with stdio transport."""
-    logging.info(f"Starting D-Bus MCP Server (stdio mode)")
+    # Check if we need to set up systemd socket wrapping
+    is_systemd = setup_systemd_stdio()
+    
+    if is_systemd:
+        logging.info(f"Starting D-Bus MCP Server (systemd socket mode)")
+    else:
+        logging.info(f"Starting D-Bus MCP Server (stdio mode)")
+    
     logging.info(f"Using profile: {profile.name}")
     
-    # Run the stdio server using FastMCP's built-in method
-    await server.run_stdio_async()
+    try:
+        # Run the stdio server using FastMCP's built-in method
+        await server.run_stdio_async()
+    finally:
+        # Restore stdio if we modified it
+        if is_systemd:
+            restore_stdio()
 
 
 async def run_socket_server(server: FastMCP, profile, socket_path: Optional[str]):

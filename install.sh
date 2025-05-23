@@ -103,18 +103,19 @@ install_production() {
     # Create directories
     sudo mkdir -p "$BINDIR" "$LIBDIR" "$SYSCONFDIR/dbus-mcp"
     
-    # Build standalone executable using zipapp
-    print_header "Building standalone executable"
+    # Build standalone executable using PyInstaller
+    print_header "Building standalone executable with PyInstaller"
     
     # Create a temporary build directory
     local BUILD_DIR=$(mktemp -d)
     trap "rm -rf $BUILD_DIR" EXIT
     
-    # Install dependencies to build directory
-    pip install --target="$BUILD_DIR" . >/dev/null 2>&1
+    # Ensure we're in venv and install PyInstaller
+    source venv/bin/activate
+    pip install pyinstaller >/dev/null 2>&1
     
-    # Create __main__.py for zipapp
-    cat > "$BUILD_DIR/__main__.py" << 'EOF'
+    # Create a simple entry point script
+    cat > "$BUILD_DIR/dbus-mcp-main.py" << 'EOF'
 #!/usr/bin/env python3
 import sys
 from dbus_mcp.__main__ import main
@@ -123,19 +124,44 @@ if __name__ == "__main__":
     sys.exit(main())
 EOF
     
-    # Create zipapp
-    python3 -m zipapp "$BUILD_DIR" \
-        -p "/usr/bin/env python3" \
-        -o "$BUILD_DIR/dbus-mcp" \
-        -c
+    # Build with PyInstaller
+    # --onefile: Single executable
+    # --name: Output name
+    # --distpath: Where to put the output
+    # --clean: Clean build files
+    # --noconfirm: Overwrite without asking
+    print_header "Running PyInstaller (this may take a minute...)"
+    pyinstaller \
+        --onefile \
+        --name dbus-mcp \
+        --distpath "$BUILD_DIR/dist" \
+        --workpath "$BUILD_DIR/build" \
+        --specpath "$BUILD_DIR" \
+        --clean \
+        --noconfirm \
+        --log-level ERROR \
+        "$BUILD_DIR/dbus-mcp-main.py" >/dev/null 2>&1
+    
+    if [ ! -f "$BUILD_DIR/dist/dbus-mcp" ]; then
+        print_error "PyInstaller build failed"
+        exit 1
+    fi
     
     # Install the executable
-    sudo install -m 755 "$BUILD_DIR/dbus-mcp" "$BINDIR/dbus-mcp"
+    sudo install -m 755 "$BUILD_DIR/dist/dbus-mcp" "$BINDIR/dbus-mcp"
     print_success "Installed dbus-mcp executable to $BINDIR"
     
-    # Install wrapper script
+    # Test the executable
+    if "$BINDIR/dbus-mcp" --help >/dev/null 2>&1; then
+        print_success "Executable test passed"
+    else
+        print_warning "Executable test failed - check dependencies"
+    fi
+    
+    # Install wrapper scripts
     sudo install -m 755 scripts/dbus-mcp-socket-wrapper.sh "$BINDIR/dbus-mcp-socket-wrapper"
-    print_success "Installed socket wrapper"
+    sudo install -m 755 scripts/dbus-mcp-server.sh "$BINDIR/dbus-mcp-server"
+    print_success "Installed wrapper scripts"
     
     # Install config file
     if [ ! -f "$SYSCONFDIR/dbus-mcp/config" ]; then
@@ -145,9 +171,11 @@ EOF
         print_warning "Configuration already exists, not overwriting"
     fi
     
-    # Update wrapper to use installed binary
-    sudo sed -i "s|PYTHON_BIN=.*|PYTHON_BIN=\"$BINDIR/dbus-mcp\"|" "$BINDIR/dbus-mcp-socket-wrapper"
-    sudo sed -i "s|MCP_MODULE=.*|# MCP_MODULE not needed for standalone|" "$BINDIR/dbus-mcp-socket-wrapper"
+    # Update wrappers to use installed binary
+    sudo sed -i "s|DEFAULT_BINARY=.*|DEFAULT_BINARY=\"$BINDIR/dbus-mcp\"|" "$BINDIR/dbus-mcp-socket-wrapper"
+    sudo sed -i "s|DBUS_MCP_BIN=.*|DBUS_MCP_BIN=\"$BINDIR/dbus-mcp\"|" "$BINDIR/dbus-mcp-socket-wrapper"
+    sudo sed -i "s|DEFAULT_BINARY=.*|DEFAULT_BINARY=\"$BINDIR/dbus-mcp\"|" "$BINDIR/dbus-mcp-server"
+    sudo sed -i "s|DBUS_MCP_BIN=.*|DBUS_MCP_BIN=\"$BINDIR/dbus-mcp\"|" "$BINDIR/dbus-mcp-server"
 }
 
 install_systemd_user() {
@@ -155,13 +183,12 @@ install_systemd_user() {
     
     mkdir -p "$SYSTEMD_USER_DIR"
     
-    # Install service files
-    cp systemd/user/dbus-mcp.service "$SYSTEMD_USER_DIR/"
-    cp systemd/user/dbus-mcp.socket "$SYSTEMD_USER_DIR/"
+    # Install standalone service file
+    cp systemd/user/dbus-mcp-standalone.service "$SYSTEMD_USER_DIR/"
     
-    # Update service to use installed wrapper
-    sed -i "s|ExecStart=.*|ExecStart=$BINDIR/dbus-mcp-socket-wrapper|" \
-        "$SYSTEMD_USER_DIR/dbus-mcp.service"
+    # Update service to use installed script
+    sed -i "s|ExecStart=.*dbus-mcp-server.sh|ExecStart=$BINDIR/dbus-mcp-server|" \
+        "$SYSTEMD_USER_DIR/dbus-mcp-standalone.service"
     
     print_success "Installed systemd user units"
     
@@ -214,16 +241,15 @@ show_usage() {
     echo "  cd $SCRIPT_DIR"
     echo "  ./dbus-mcp-dev --safety-level medium"
     echo ""
-    echo "Production mode (systemd socket):"
-    echo "  # Start the socket"
-    echo "  systemctl --user start dbus-mcp.socket"
+    echo "Production mode (systemd service):"
+    echo "  # Start the service"
+    echo "  systemctl --user start dbus-mcp-standalone.service"
     echo "  "
     echo "  # Enable on boot"
-    echo "  systemctl --user enable dbus-mcp.socket"
+    echo "  systemctl --user enable dbus-mcp-standalone.service"
     echo "  "
     echo "  # Check status"
-    echo "  systemctl --user status dbus-mcp.socket"
-    echo "  systemctl --user status dbus-mcp.service"
+    echo "  systemctl --user status dbus-mcp-standalone.service"
     echo ""
     echo "Configure safety level for production:"
     echo "  sudo editor $SYSCONFDIR/dbus-mcp/config"

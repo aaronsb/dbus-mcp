@@ -21,9 +21,39 @@ sudo apt install python3-gi python3-systemd
 sudo dnf install python3-gobject python3-systemd
 ```
 
-## Installation
+## Installation Options
 
-### Option 1: Quick Install (Recommended)
+### 🚀 Option 1: Production Install with SystemD (Recommended)
+
+For daily use, install D-Bus MCP as a systemd service:
+
+```bash
+# Clone the repository
+git clone https://github.com/aaronsb/dbus-mcp.git
+cd dbus-mcp
+
+# Install with systemd service
+./install.sh --prod-only
+
+# Configure safety level
+sudo nano /etc/dbus-mcp/config  # Set SAFETY_LEVEL="medium"
+
+# Start the service
+systemctl --user start dbus-mcp-standalone.service
+systemctl --user enable dbus-mcp-standalone.service
+```
+
+This provides:
+- ✅ Automatic startup on demand
+- ✅ Unix socket for reliable connections
+- ✅ Full systemd logging and management
+- ✅ Security hardening
+
+**📖 See the [SystemD Mode Guide](guides/SYSTEMD-MODE.md) for details**
+
+### 🛠️ Option 2: Development Install
+
+For development or testing:
 
 ```bash
 # Clone the repository
@@ -36,11 +66,13 @@ cd dbus-mcp
 
 This will:
 - ✅ Check your Python version
-- ✅ Create a virtual environment with system packages
+- ✅ Create a virtual environment
 - ✅ Install all dependencies
 - ✅ Run tests to verify everything works
 
-### Option 2: Manual Install
+### Option 3: Manual Install
+
+For custom setups:
 
 ```bash
 # Clone the repository
@@ -54,44 +86,41 @@ source venv/bin/activate
 # Install the package
 pip install -e .
 
-# Check requirements
-python -m dbus_mcp --check-requirements
-
 # Test the installation
 python test_installation.py
 ```
 
 ## Running the Server
 
-### Method 1: Direct Execution (Development)
+### Method 1: SystemD Service (Recommended)
+
+If you installed with systemd support:
+
+```bash
+# The service should already be running if you followed Option 1
+systemctl --user status dbus-mcp-standalone.service
+
+# View logs
+journalctl --user -u dbus-mcp-standalone.service -f
+
+# Restart after config changes
+systemctl --user restart dbus-mcp-standalone.service
+```
+
+### Method 2: Direct Execution (Development)
+
+For development or testing:
 
 ```bash
 # Activate virtual environment
 source venv/bin/activate
 
-# Run the server
+# Run with default safety (high)
 python -m dbus_mcp
+
+# Run with specific safety level
+python -m dbus_mcp --safety-level medium
 ```
-
-### Method 2: Systemd Service (Recommended for Daily Use)
-
-Install as a systemd user service for automatic startup:
-
-```bash
-# Install the service
-./scripts/install-service.sh
-
-# Start the service
-systemctl --user start dbus-mcp
-
-# Check status
-systemctl --user status dbus-mcp
-
-# View logs
-journalctl --user -u dbus-mcp -f
-```
-
-The service will automatically start when you log in.
 
 ## 🔒 Safety Levels - Choose Your Security
 
@@ -134,24 +163,24 @@ Add to your Claude Desktop configuration:
 **Linux:** `~/.config/claude/claude_desktop_config.json`  
 **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
 
+#### For SystemD Mode (Recommended):
 ```json
 {
   "mcpServers": {
     "dbus": {
-      "command": "/absolute/path/to/dbus-mcp/venv/bin/python",
-      "args": ["-m", "dbus_mcp", "--safety-level", "high"],
-      "cwd": "/absolute/path/to/dbus-mcp"
+      "command": "socat",
+      "args": ["UNIX-CONNECT:$XDG_RUNTIME_DIR/dbus-mcp.sock", "STDIO"]
     }
   }
 }
 ```
 
-**For medium safety (text editor + file operations):**
+#### For Development Mode:
 ```json
 {
   "mcpServers": {
     "dbus": {
-      "command": "/absolute/path/to/dbus-mcp/venv/bin/python", 
+      "command": "/absolute/path/to/dbus-mcp/venv/bin/python",
       "args": ["-m", "dbus_mcp", "--safety-level", "medium"],
       "cwd": "/absolute/path/to/dbus-mcp"
     }
@@ -161,39 +190,44 @@ Add to your Claude Desktop configuration:
 
 ### Claude Code (claude.ai/code)
 
-Use the Claude CLI to add the server:
-
+#### For SystemD Mode (Recommended):
 ```bash
-# Add the server with high safety (default)
-claude mcp add dbus-mcp /absolute/path/to/dbus-mcp/venv/bin/python -- -m dbus_mcp --safety-level high
+# Add the server using socat to connect to the Unix socket
+claude mcp add dbus-mcp socat -- UNIX-CONNECT:$XDG_RUNTIME_DIR/dbus-mcp.sock STDIO
 
-# Or add with medium safety for text editor integration
+# Verify it was added
+claude mcp list
+```
+
+#### For Development Mode:
+```bash
+# Add the server with medium safety for text editor integration
 claude mcp add dbus-mcp /absolute/path/to/dbus-mcp/venv/bin/python -- -m dbus_mcp --safety-level medium
 
 # Verify it was added
 claude mcp list
-
-# The server will be available in your next Claude Code session
 ```
+
+Note: The server will be available in your next Claude Code session.
 
 ### VS Code with Continue.dev
 
 Add to your Continue configuration (`~/.continue/config.json`):
 
+#### For SystemD Mode (Recommended):
 ```json
 {
   "models": [...],
   "mcpServers": {
     "dbus": {
-      "command": "/absolute/path/to/dbus-mcp/venv/bin/python",
-      "args": ["-m", "dbus_mcp", "--safety-level", "high"],
-      "cwd": "/absolute/path/to/dbus-mcp"
+      "command": "socat",
+      "args": ["UNIX-CONNECT:$XDG_RUNTIME_DIR/dbus-mcp.sock", "STDIO"]
     }
   }
 }
 ```
 
-**For medium safety:**
+#### For Development Mode:
 ```json
 {
   "models": [...],

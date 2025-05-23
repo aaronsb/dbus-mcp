@@ -1,5 +1,5 @@
 #!/bin/bash
-# D-Bus MCP Socket Wrapper
+# D-Bus MCP Socket Wrapper using socat
 # Bridges systemd socket to stdio-based MCP server
 
 # Default configuration
@@ -22,7 +22,14 @@ EXTRA_ARGS="${EXTRA_ARGS:-}"
 # Log startup
 logger -t dbus-mcp "Starting MCP server with safety level: $SAFETY_LEVEL"
 
-# Always execute the MCP server - it will detect systemd socket activation
-exec "$DBUS_MCP_BIN" \
-    --safety-level "$SAFETY_LEVEL" \
-    $EXTRA_ARGS
+# Check if we have systemd socket activation
+if [ -n "$LISTEN_FDS" ] && [ "$LISTEN_FDS" -gt 0 ]; then
+    # Use socat to bridge the socket FD to stdio
+    # FD 3 is the first socket passed by systemd
+    exec socat FD:3 EXEC:"$DBUS_MCP_BIN --safety-level $SAFETY_LEVEL $EXTRA_ARGS",pty,raw,echo=0
+else
+    # Direct execution without socket activation
+    exec "$DBUS_MCP_BIN" \
+        --safety-level "$SAFETY_LEVEL" \
+        $EXTRA_ARGS
+fi

@@ -4,9 +4,11 @@
 
 ### 1. SystemD Integration Pattern
 
-The natural fit is for the MCP server to run as a systemd service, but with important nuances:
+**Status: ✅ Implemented as the recommended deployment method**
 
-**Proposed Architecture:**
+The MCP server runs as a systemd user service with Unix socket communication. This is now the **recommended production deployment** pattern.
+
+**Current Architecture:**
 ```
 ┌─────────────────┐
 │   AI Client     │
@@ -204,6 +206,24 @@ Accept=false
 [Install]
 WantedBy=sockets.target
 ```
+
+### 4. Current Implementation Status
+
+**Implemented Deployment Model:**
+- ✅ SystemD user service (`dbus-mcp-standalone.service`)
+- ✅ Unix socket at `$XDG_RUNTIME_DIR/dbus-mcp.sock`
+- ✅ socat bridge for stdio-to-socket translation
+- ✅ System-wide configuration at `/etc/dbus-mcp/config`
+- ✅ Full journald integration
+
+**Why Unix Socket + socat:**
+Due to FastMCP's stdio-based transport, we use socat as a bridge between the Unix socket and the MCP server's stdio interface. This provides:
+- Socket-based reliability and persistence
+- Multiple client support
+- SystemD integration benefits
+- Compatibility with existing MCP protocol
+
+**📖 See [SystemD Mode Guide](../guides/SYSTEMD-MODE.md) for deployment instructions**
 
 ## Design Principles
 
