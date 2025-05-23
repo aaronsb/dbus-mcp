@@ -20,6 +20,7 @@ from mcp.server import FastMCP
 from .server import DBusMCPServer
 from .profiles import load_profile, ProfileDetector
 from .tools.registry import register_core_tools
+from .system_requirements import check_and_warn
 
 
 def setup_logging(level: str = "INFO"):
@@ -77,6 +78,12 @@ Examples:
         '--detect',
         action='store_true',
         help='Detect and display system information, then exit'
+    )
+    
+    parser.add_argument(
+        '--check-requirements',
+        action='store_true',
+        help='Check system package requirements and exit'
     )
     
     parser.add_argument(
@@ -154,6 +161,9 @@ async def run_http_server(server: FastMCP, profile, host: str, port: int):
 
 async def async_main(args):
     """Async main function."""
+    # Check system requirements
+    check_and_warn()
+    
     # Load system profile
     profile = load_profile(args.profile)
     logging.info(f"Loaded profile: {profile.name} - {profile.description}")
@@ -193,6 +203,12 @@ def main():
     if args.detect:
         detect_and_display()
         return 0
+    
+    # Handle requirements check mode
+    if args.check_requirements:
+        from .system_requirements import print_requirements_report
+        success = print_requirements_report()
+        return 0 if success else 1
     
     try:
         # Run the async main

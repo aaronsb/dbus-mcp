@@ -51,30 +51,81 @@ AI Assistant <-> MCP Protocol <-> D-Bus MCP Server <-> D-Bus (Session/System)
 
 ## Installation
 
-```bash
-# Clone the repository
-git clone https://github.com/aaronsb/dbus-mcp.git
-cd dbus-mcp
+### Prerequisites
 
-# Install in development mode
-pip install -e .
+1. **Python 3.9+** - The MCP SDK requires Python 3.9 or newer
+2. **D-Bus** - Should be installed on most Linux systems
+3. **System packages** - Some features require system-level Python packages:
+   ```bash
+   # Arch Linux
+   sudo pacman -S python-gobject python-systemd
 
-# Or install with development dependencies
-pip install -e ".[dev]"
+   # Ubuntu/Debian  
+   sudo apt install python3-gi python3-systemd
+
+   # Fedora
+   sudo dnf install python3-gobject python3-systemd
+   ```
+
+### Quick Start
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/aaronsb/dbus-mcp.git
+   cd dbus-mcp
+   ```
+
+2. **Create virtual environment with system packages**:
+   ```bash
+   python -m venv venv --system-site-packages
+   source venv/bin/activate  # On Linux/Mac
+   ```
+
+3. **Install the package**:
+   ```bash
+   pip install -e .
+   ```
+
+4. **Check requirements**:
+   ```bash
+   python -m dbus_mcp --check-requirements
+   ```
+
+5. **Test the server**:
+   ```bash
+   python -m dbus_mcp --detect  # Show system information
+   python -m dbus_mcp --help    # Show all options
+   ```
+
+### Using with Claude Desktop
+
+Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS or `~/.config/claude/claude_desktop_config.json` on Linux):
+
+```json
+{
+  "mcpServers": {
+    "dbus": {
+      "command": "/path/to/dbus-mcp/venv/bin/python",
+      "args": ["-m", "dbus_mcp"],
+      "cwd": "/path/to/dbus-mcp"
+    }
+  }
+}
 ```
 
-## Quick Start
+## Core Tools
 
-```bash
-# Check system detection
-python -m dbus_mcp.server --detect
+The server starts with 7 essential tools for D-Bus interaction:
 
-# Run the server
-python -m dbus_mcp.server
+1. **`help`** - Show available capabilities and tools
+2. **`notify`** - Send desktop notifications
+3. **`status`** - Get system status (battery, network, etc.)
+4. **`discover`** - Explore available tool categories
+5. **`list_services`** - List all D-Bus services
+6. **`introspect`** - Explore service interfaces and methods
+7. **`call_method`** - Call D-Bus methods (with security controls)
 
-# For AI clients (Claude Desktop, etc.), add to config:
-# "command": "python -m dbus_mcp.server"
-```
+Additional tools are available based on your system profile (e.g., `clipboard_read`/`clipboard_write` on KDE).
 
 ## Documentation
 
