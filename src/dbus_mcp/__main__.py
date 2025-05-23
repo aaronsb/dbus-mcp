@@ -15,8 +15,7 @@ import logging
 import asyncio
 from typing import Optional
 
-from mcp import Server
-from mcp.server.stdio import stdio_server
+from mcp.server import FastMCP
 
 from .server import DBusMCPServer
 from .profiles import load_profile, ProfileDetector
@@ -131,29 +130,25 @@ def detect_and_display():
             print(f"  {key}: {value}")
 
 
-async def run_stdio_server(server: Server, profile):
+async def run_stdio_server(server: FastMCP, profile):
     """Run the MCP server with stdio transport."""
     logging.info(f"Starting D-Bus MCP Server (stdio mode)")
     logging.info(f"Using profile: {profile.name}")
     
-    # Run the stdio server
-    async with stdio_server() as (read_stream, write_stream):
-        await server.run(
-            read_stream,
-            write_stream,
-            server.create_initialization_options()
-        )
+    # Run the stdio server using FastMCP's built-in method
+    await server.run_stdio_async()
 
 
-async def run_socket_server(server: Server, profile, socket_path: Optional[str]):
+async def run_socket_server(server: FastMCP, profile, socket_path: Optional[str]):
     """Run the MCP server with socket transport (SystemD activation)."""
     # TODO: Implement socket mode
     raise NotImplementedError("Socket mode not yet implemented")
 
 
-async def run_http_server(server: Server, profile, host: str, port: int):
+async def run_http_server(server: FastMCP, profile, host: str, port: int):
     """Run the MCP server with HTTP/SSE transport."""
-    # TODO: Implement HTTP mode
+    # TODO: Implement HTTP mode using FastMCP's SSE support
+    # await server.run_sse_async(host=host, port=port)
     raise NotImplementedError("HTTP mode not yet implemented")
 
 

@@ -9,7 +9,7 @@ import logging
 from typing import Optional, Dict, Any
 from datetime import datetime
 
-from mcp import Server
+from mcp.server import FastMCP
 from pydantic import BaseModel
 
 from .profiles.base import SystemProfile
@@ -66,7 +66,7 @@ class DBusMCPServer:
         self.config = config or ServerConfig()
         
         # Create the MCP server
-        self.server = Server(self.config.name)
+        self.server = FastMCP(self.config.name)
         
         # Initialize components
         self.dbus_manager = DBusManager(

@@ -190,3 +190,100 @@ class SecurityPolicy:
             }
         
         return status
+    
+    def is_method_allowed(self, service: str, interface: str, method: str) -> bool:
+        """
+        Check if a specific D-Bus method call is allowed.
+        
+        This is used by the call_method tool to enforce security policies
+        on arbitrary D-Bus method calls.
+        
+        Args:
+            service: D-Bus service name
+            interface: D-Bus interface name
+            method: Method name
+            
+        Returns:
+            True if the method call is allowed, False otherwise
+        """
+        # Block dangerous system operations
+        dangerous_patterns = [
+            # Power management
+            ('org.freedesktop.login1', 'PowerOff'),
+            ('org.freedesktop.login1', 'Reboot'),
+            ('org.freedesktop.login1', 'Suspend'),
+            ('org.freedesktop.login1', 'Hibernate'),
+            
+            # Package management
+            ('org.freedesktop.PackageKit', 'InstallPackages'),
+            ('org.freedesktop.PackageKit', 'RemovePackages'),
+            ('org.freedesktop.PackageKit', 'UpdatePackages'),
+            
+            # Systemd dangerous operations
+            ('org.freedesktop.systemd1', 'PowerOff'),
+            ('org.freedesktop.systemd1', 'Reboot'),
+            ('org.freedesktop.systemd1', 'Halt'),
+            ('org.freedesktop.systemd1', 'KExec'),
+            
+            # Disk operations
+            ('org.freedesktop.UDisks2', 'Format'),
+            ('org.freedesktop.UDisks2', 'Delete'),
+            
+            # PolicyKit operations (prevent privilege escalation)
+            ('org.freedesktop.PolicyKit1', 'AuthenticationAgentResponse'),
+        ]
+        
+        # Check against dangerous patterns
+        for pattern_service, pattern_method in dangerous_patterns:
+            if service.startswith(pattern_service) and method == pattern_method:
+                logger.warning(f"Blocked dangerous method: {service}.{interface}.{method}")
+                return False
+        
+        # Block all methods that could modify critical system state
+        dangerous_method_names = {
+            'PowerOff', 'Reboot', 'Halt', 'Shutdown', 'Suspend', 'Hibernate',
+            'Format', 'Delete', 'Destroy', 'Remove', 'Uninstall',
+            'Install', 'Update', 'Upgrade',
+            'SetPassword', 'ChangePassword',
+            'ExecuteCommand', 'RunScript',
+        }
+        
+        if method in dangerous_method_names:
+            logger.warning(f"Blocked dangerous method name: {method}")
+            return False
+        
+        # Allow read-only operations by default
+        read_only_prefixes = ['Get', 'List', 'Is', 'Has', 'Can', 'Query']
+        for prefix in read_only_prefixes:
+            if method.startswith(prefix):
+                return True
+        
+        # Allow specific safe operations
+        safe_operations = [
+            # Clipboard operations
+            ('org.kde.klipper', 'getClipboardContents'),
+            ('org.kde.klipper', 'setClipboardContents'),
+            
+            # Notification operations
+            ('org.freedesktop.Notifications', 'Notify'),
+            ('org.freedesktop.Notifications', 'CloseNotification'),
+            
+            # Media player operations
+            ('org.mpris.MediaPlayer2', 'Play'),
+            ('org.mpris.MediaPlayer2', 'Pause'),
+            ('org.mpris.MediaPlayer2', 'Next'),
+            ('org.mpris.MediaPlayer2', 'Previous'),
+            
+            # Screenshot operations
+            ('org.freedesktop.portal.Screenshot', 'Screenshot'),
+            ('org.kde.kwin.Screenshot', 'screenshotArea'),
+            ('org.kde.kwin.Screenshot', 'screenshotFullscreen'),
+        ]
+        
+        for safe_service, safe_method in safe_operations:
+            if service.endswith(safe_service) and method == safe_method:
+                return True
+        
+        # Log and deny by default
+        logger.info(f"Method not explicitly allowed: {service}.{interface}.{method}")
+        return False
