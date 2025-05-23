@@ -6,9 +6,10 @@ Enforces security policies for D-Bus operations.
 
 import os
 import logging
-from typing import Dict, Any, Tuple, Set
+from typing import Dict, Any, Tuple, Set, Optional
 from datetime import datetime, timedelta
 from collections import defaultdict
+import fnmatch
 
 from .profiles.base import SystemProfile
 
@@ -31,6 +32,147 @@ class SecurityPolicy:
     SAFETY_HIGH = "high"      # Very restrictive (default)
     SAFETY_MEDIUM = "medium"  # Allow productivity operations
     SAFETY_LOW = "low"        # More permissive (future)
+    
+    # Operation categories - Pattern-based security model
+    # Categories can have 'requires_interaction' flag for operations needing human collaboration
+    OPERATION_CATEGORIES = {
+        # 🟢 HIGH Safety - Always allowed
+        'read_state': {
+            'description': 'Read application or system state',
+            'patterns': ['Get*', 'List*', 'Query*', 'Is*', 'Has*', 'Read*'],
+            'safety_level': 'high'
+        },
+        'user_notification': {
+            'description': 'Notify user without side effects',
+            'patterns': ['Notify', 'ShowNotification', 'Alert', 'CloseNotification'],
+            'safety_level': 'high'
+        },
+        'clipboard_read': {
+            'description': 'Read clipboard contents',
+            'patterns': ['*ClipboardContents', 'GetClipboard*', 'ReadClipboard*'],
+            'safety_level': 'high'
+        },
+        'media_control': {
+            'description': 'Control media playback',
+            'patterns': ['Play', 'Pause', 'Next', 'Previous', 'Stop', 'PlayPause'],
+            'safety_level': 'high'
+        },
+        
+        # 🟡 MEDIUM Safety - Productivity operations
+        'text_input': {
+            'description': 'Send text to applications',
+            'patterns': ['*Input*', 'InsertText', 'TypeText', 'SendKeys', 'SetText*',
+                        'sendText', 'SendMessage', 'ComposeEmail', 'WriteDocument'],
+            'safety_level': 'medium'
+        },
+        'clipboard_write': {
+            'description': 'Write to clipboard',
+            'patterns': ['SetClipboard*', 'WriteClipboard*', 'CopyTo*'],
+            'safety_level': 'medium'
+        },
+        'file_navigation': {
+            'description': 'Open files/folders in applications',
+            'patterns': ['Open*', 'Show*', 'Navigate*', 'Browse*', 'Reveal*',
+                        'Display*', 'Load*', 'View*'],
+            'safety_level': 'medium'
+        },
+        'window_management': {
+            'description': 'Focus and arrange windows (non-destructive)',
+            'patterns': ['Activate*', 'Focus*', 'Raise*', 'Minimize*', 'SetActive*',
+                        'activate', 'focus', 'raise', 'lower', 'show', 'hide',
+                        'cascadeDesktop', 'unclutterDesktop', 'showDesktop',
+                        'nextDesktop', 'previousDesktop', 'highlightWindows'],
+            'safety_level': 'medium'
+        },
+        'desktop_navigation': {
+            'description': 'Switch between virtual desktops',
+            'patterns': ['*Desktop', 'switchTo*', 'moveToDesktop*'],
+            'safety_level': 'medium'
+        },
+        'screenshot': {
+            'description': 'Capture screen content',
+            'patterns': ['Screenshot*', 'Capture*', 'Grab*'],
+            'safety_level': 'medium'
+        },
+        
+        # 🤝 INTERACTIVE - Requires human collaboration
+        'interactive_selection': {
+            'description': 'Operations requiring user to click/select',
+            'patterns': ['query*', '*Interactive*', 'pick*', 'select*'],
+            'safety_level': 'medium',
+            'requires_interaction': True,
+            'interaction_type': 'user_selection'
+        },
+        'interactive_confirmation': {
+            'description': 'Operations requiring user confirmation',
+            'patterns': ['confirm*', 'approve*', 'authenticate*'],
+            'safety_level': 'medium',
+            'requires_interaction': True,
+            'interaction_type': 'user_confirmation'
+        },
+        
+        # 🔴 LOW Safety - System modifications
+        'window_close': {
+            'description': 'Close windows (potential data loss)',
+            'patterns': ['Close*', 'Quit*', 'Exit*', 'killWindow', 'terminate*'],
+            'safety_level': 'low'
+        },
+        'process_control': {
+            'description': 'Start/stop processes and services',
+            'patterns': ['Start*', 'Stop*', 'Restart*', 'Kill*', 'Terminate*'],
+            'safety_level': 'low'
+        },
+        'system_config': {
+            'description': 'Modify system configuration',
+            'patterns': ['Set*', 'Configure*', 'Update*', 'Change*', 'Apply*'],
+            'safety_level': 'low'
+        },
+        
+        # Additional categories for comprehensive application support
+        'document_operations': {
+            'description': 'Save documents and export files',
+            'patterns': ['Save*', 'Export*', 'Print*', 'Convert*'],
+            'safety_level': 'medium'
+        },
+        'communication': {
+            'description': 'Send messages and emails',
+            'patterns': ['SendMessage', 'SendEmail', 'SendIM', 'PostStatus'],
+            'safety_level': 'medium'
+        },
+        'media_management': {
+            'description': 'Organize media files',
+            'patterns': ['AddToPlaylist', 'ImportMedia', 'TagFile', 'OrganizePhotos'],
+            'safety_level': 'medium'
+        },
+        'search_operations': {
+            'description': 'Search for files and content',
+            'patterns': ['Search*', 'Find*', 'Locate*', 'QueryIndex'],
+            'safety_level': 'high'  # Read-only searching
+        },
+        'window_info': {
+            'description': 'Query window and desktop information',
+            'patterns': ['queryWindowInfo', 'getWindowInfo', 'currentDesktop',
+                        'supportInformation', 'activeOutputName'],
+            'safety_level': 'high'  # Read-only window queries
+        },
+        
+        # ⚫ NEVER Allowed - Destructive operations
+        'system_power': {
+            'description': 'Power management operations',
+            'patterns': ['PowerOff', 'Reboot', 'Shutdown', 'Suspend', 'Hibernate'],
+            'forbidden': True
+        },
+        'data_destruction': {
+            'description': 'Delete or format data',
+            'patterns': ['Delete*', 'Remove*', 'Format*', 'Destroy*', 'Wipe*'],
+            'forbidden': True
+        },
+        'package_management': {
+            'description': 'Install or remove software',
+            'patterns': ['Install*', 'Uninstall*', 'RemovePackage*', 'UpdatePackage*'],
+            'forbidden': True
+        }
+    }
     
     # Operations that are ALWAYS forbidden
     FORBIDDEN_OPERATIONS = {
@@ -212,12 +354,43 @@ class SecurityPolicy:
         
         return status
     
+    def _categorize_method(self, method: str) -> Optional[str]:
+        """
+        Categorize a method based on pattern matching.
+        
+        Returns the category name if matched, None otherwise.
+        """
+        for category_name, category_info in self.OPERATION_CATEGORIES.items():
+            patterns = category_info.get('patterns', [])
+            for pattern in patterns:
+                if fnmatch.fnmatch(method, pattern):
+                    return category_name
+        return None
+    
+    def get_method_interaction_info(self, method: str) -> Optional[Dict[str, Any]]:
+        """
+        Get interaction requirements for a method.
+        
+        Returns dict with 'requires_interaction' and 'interaction_type' if applicable.
+        """
+        category = self._categorize_method(method)
+        if category:
+            category_info = self.OPERATION_CATEGORIES[category]
+            if category_info.get('requires_interaction', False):
+                return {
+                    'requires_interaction': True,
+                    'interaction_type': category_info.get('interaction_type', 'unknown'),
+                    'category': category,
+                    'description': category_info.get('description', '')
+                }
+        return None
+    
     def is_method_allowed(self, service: str, interface: str, method: str) -> bool:
         """
-        Check if a specific D-Bus method call is allowed.
+        Check if a specific D-Bus method call is allowed using category-based security.
         
-        This is used by the call_method tool to enforce security policies
-        on arbitrary D-Bus method calls.
+        This uses pattern matching to categorize operations rather than maintaining
+        lists of specific endpoints.
         
         Args:
             service: D-Bus service name
@@ -227,110 +400,46 @@ class SecurityPolicy:
         Returns:
             True if the method call is allowed, False otherwise
         """
-        # Block dangerous system operations
-        dangerous_patterns = [
-            # Power management
-            ('org.freedesktop.login1', 'PowerOff'),
-            ('org.freedesktop.login1', 'Reboot'),
-            ('org.freedesktop.login1', 'Suspend'),
-            ('org.freedesktop.login1', 'Hibernate'),
-            
-            # Package management
-            ('org.freedesktop.PackageKit', 'InstallPackages'),
-            ('org.freedesktop.PackageKit', 'RemovePackages'),
-            ('org.freedesktop.PackageKit', 'UpdatePackages'),
-            
-            # Systemd dangerous operations
-            ('org.freedesktop.systemd1', 'PowerOff'),
-            ('org.freedesktop.systemd1', 'Reboot'),
-            ('org.freedesktop.systemd1', 'Halt'),
-            ('org.freedesktop.systemd1', 'KExec'),
-            
-            # Disk operations
-            ('org.freedesktop.UDisks2', 'Format'),
-            ('org.freedesktop.UDisks2', 'Delete'),
-            
-            # PolicyKit operations (prevent privilege escalation)
-            ('org.freedesktop.PolicyKit1', 'AuthenticationAgentResponse'),
-        ]
+        # First, try to categorize the method
+        category = self._categorize_method(method)
         
-        # Check against dangerous patterns
-        for pattern_service, pattern_method in dangerous_patterns:
-            if service.startswith(pattern_service) and method == pattern_method:
-                logger.warning(f"Blocked dangerous method: {service}.{interface}.{method}")
+        if category:
+            category_info = self.OPERATION_CATEGORIES[category]
+            
+            # Check if forbidden
+            if category_info.get('forbidden', False):
+                logger.warning(f"Blocked forbidden category '{category}': {service}.{interface}.{method}")
+                return False
+            
+            # Check safety level requirement
+            required_level = category_info.get('safety_level')
+            
+            if required_level == 'high':
+                # Always allowed
+                logger.debug(f"Allowed '{category}' (high safety): {method}")
+                return True
+            elif required_level == 'medium' and self.safety_level in ['medium', 'low']:
+                logger.debug(f"Allowed '{category}' (medium safety): {method}")
+                return True
+            elif required_level == 'low' and self.safety_level == 'low':
+                logger.debug(f"Allowed '{category}' (low safety): {method}")
+                return True
+            else:
+                logger.info(f"Blocked '{category}' - requires {required_level} safety, current: {self.safety_level}")
                 return False
         
-        # Block all methods that could modify critical system state
-        dangerous_method_names = {
-            'PowerOff', 'Reboot', 'Halt', 'Shutdown', 'Suspend', 'Hibernate',
-            'Format', 'Delete', 'Destroy', 'Remove', 'Uninstall',
-            'Install', 'Update', 'Upgrade',
-            'SetPassword', 'ChangePassword',
-            'ExecuteCommand', 'RunScript',
-        }
-        
-        if method in dangerous_method_names:
-            logger.warning(f"Blocked dangerous method name: {method}")
-            return False
-        
-        # Allow read-only operations by default
-        read_only_prefixes = ['Get', 'List', 'Is', 'Has', 'Can', 'Query']
-        for prefix in read_only_prefixes:
-            if method.startswith(prefix):
+        # Special handling for clipboard write at medium safety
+        # (since setClipboardContents doesn't match our write patterns)
+        if self.safety_level in ['medium', 'low']:
+            if method == 'setClipboardContents' and 'klipper' in service:
+                logger.debug(f"Allowed clipboard write (special case): {method}")
+                return True
+            
+            # Also handle window activation methods that don't match patterns
+            if method == 'activate' and interface == 'org.kde.Kate.Application':
+                logger.debug(f"Allowed window activation (special case): {method}")
                 return True
         
-        # High safety operations (always allowed)
-        high_safety_operations = [
-            # Clipboard operations
-            ('org.kde.klipper', 'getClipboardContents'),
-            ('org.kde.klipper', 'setClipboardContents'),
-            
-            # Notification operations
-            ('org.freedesktop.Notifications', 'Notify'),
-            ('org.freedesktop.Notifications', 'CloseNotification'),
-            
-            # Media player operations
-            ('org.mpris.MediaPlayer2', 'Play'),
-            ('org.mpris.MediaPlayer2', 'Pause'),
-            ('org.mpris.MediaPlayer2', 'Next'),
-            ('org.mpris.MediaPlayer2', 'Previous'),
-            
-            # Screenshot operations
-            ('org.freedesktop.portal.Screenshot', 'Screenshot'),
-            ('org.kde.kwin.Screenshot', 'screenshotArea'),
-            ('org.kde.kwin.Screenshot', 'screenshotFullscreen'),
-        ]
-        
-        for safe_service, safe_method in high_safety_operations:
-            if service.endswith(safe_service) and method == safe_method:
-                return True
-        
-        # Medium safety operations (allowed in MEDIUM or LOW safety)
-        if self.safety_level in [self.SAFETY_MEDIUM, self.SAFETY_LOW]:
-            medium_safety_operations = [
-                # Text editor operations (Kate)
-                ('org.kde.kate', 'org.kde.Kate.Application', 'openInput'),
-                ('org.kde.kate', 'org.kde.Kate.Application', 'openUrl'),
-                ('org.kde.kate', 'org.kde.Kate.Application', 'setCursor'),
-                ('org.kde.kate', 'org.kde.Kate.Application', 'activateSession'),
-                ('org.kde.kate', 'org.kde.Kate.Application', 'activate'),
-                
-                # File manager operations
-                ('org.freedesktop.FileManager1', 'org.freedesktop.FileManager1', 'ShowItems'),
-                ('org.freedesktop.FileManager1', 'org.freedesktop.FileManager1', 'ShowFolders'),
-                ('org.freedesktop.FileManager1', 'org.freedesktop.FileManager1', 'ShowItemProperties'),
-                
-                # Browser operations (opening URLs)
-                ('org.freedesktop.portal.OpenURI', 'org.freedesktop.portal.OpenURI', 'OpenURI'),
-                
-                # Window manager operations
-                ('org.kde.KWin', 'org.kde.KWin', 'setActiveWindow'),
-            ]
-            
-            for safe_service, safe_interface, safe_method in medium_safety_operations:
-                if service.startswith(safe_service) and interface == safe_interface and method == safe_method:
-                    return True
-        
-        # Log and deny by default
-        logger.info(f"Method not explicitly allowed: {service}.{interface}.{method}")
+        # If no category matched, deny by default
+        logger.info(f"Method not categorized, denying: {service}.{interface}.{method}")
         return False

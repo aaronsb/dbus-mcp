@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=D-Bus MCP Server
+Comment=Model Context Protocol server for D-Bus integration
+Exec=/usr/bin/python -m dbus_mcp
+NoDisplay=true
+X-KDE-DBUS-Restricted-Interfaces=org.kde.kwin.Screenshot,org.kde.KWin.ScreenShot2

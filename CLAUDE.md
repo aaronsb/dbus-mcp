@@ -107,3 +107,54 @@ The project follows a modular architecture:
 - Test systemd socket activation
 - Test profile detection and adaptation
 - Validate each system profile independently
+
+## Development Workflow with Claude Code
+
+### Self-Testing via MCP
+This project has a unique development workflow: we use Claude Code's MCP client capabilities to test the D-Bus MCP server we're building. This creates a powerful feedback loop where:
+
+1. **Claude Code is the MCP client** - It connects to our D-Bus MCP server
+2. **The D-Bus MCP server is the project** - We're building and testing it simultaneously
+3. **Real-time testing** - We can immediately test changes by using the MCP tools
+
+### Configuration
+```bash
+# Configure Claude Code to use the D-Bus MCP server
+claude mcp add dbus-mcp /path/to/venv/bin/python -- -m dbus_mcp --safety-level medium
+
+# List configured MCP servers
+claude mcp list
+```
+
+### Important: Restart Requirements
+**When making changes to the D-Bus MCP server code:**
+
+1. **Reinstall the Python module** after code changes:
+   ```bash
+   cd /home/aaron/Projects/ai/mcp/dbus-mcp
+   ./venv/bin/pip install -e . --quiet
+   ```
+
+2. **Restart Claude Code** to pick up the changes:
+   - The MCP server runs in Claude Code's process
+   - Code changes require a full restart to take effect
+   - Use `/restart` command or restart the application
+
+3. **Test using MCP tools** directly:
+   ```python
+   # Test after restart
+   mcp__dbus-mcp__help()  # Shows safety level and capabilities
+   mcp__dbus-mcp__call_method(...)  # Test specific D-Bus operations
+   ```
+
+### Safety Levels During Development
+- **HIGH (default)**: Safe for testing read operations
+- **MEDIUM**: Recommended for development - enables text editor integration
+- **LOW**: For testing system administration features
+
+### Common Development Patterns
+1. Make security policy changes
+2. Reinstall with `pip install -e .`
+3. Restart Claude Code
+4. Test immediately with `mcp__dbus-mcp__*` tools
+5. See real results (e.g., text appears in Kate, notifications show)

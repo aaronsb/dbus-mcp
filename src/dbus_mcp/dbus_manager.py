@@ -7,8 +7,9 @@ Handles connections to session and system buses with proper lifecycle management
 import logging
 from typing import Optional, Any
 from pydbus import SessionBus, SystemBus
-from gi.repository import GLib
+from gi.repository import GLib, Gio
 import threading
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -177,3 +178,89 @@ class DBusManager:
         self._system_bus = None
         
         logger.info("D-Bus cleanup complete")
+    
+    def call_with_fd(self, bus_name: str, service_name: str, object_path: str,
+                     interface_name: str, method_name: str, args: list, fd: int) -> Any:
+        """
+        Call a D-Bus method that requires a Unix file descriptor.
+        
+        Args:
+            bus_name: 'session' or 'system'
+            service_name: D-Bus service name
+            object_path: Object path
+            interface_name: Interface name
+            method_name: Method name
+            args: Method arguments (fd will be appended)
+            fd: File descriptor to pass
+            
+        Returns:
+            Method result
+        """
+        if bus_name == 'session':
+            connection = self.session_bus.con
+        else:
+            connection = self.system_bus.con if self.system_bus else None
+            if connection is None:
+                raise RuntimeError("System bus is not available")
+        
+        try:
+            # Create Unix FD list
+            fd_list = Gio.UnixFDList.new()
+            fd_index = fd_list.append(fd)
+            
+            # Prepare method call with GVariant
+            # Most screenshot methods take (options: a{sv}, fd: h)
+            # The 'h' type in D-Bus represents a file descriptor handle
+            if args is None:
+                args = []
+            
+            # Build the complete argument list with fd handle
+            full_args = list(args) + [fd_index]
+            
+            # Call method with FD list
+            result = connection.call_with_unix_fd_list_sync(
+                service_name,
+                object_path,
+                interface_name,
+                method_name,
+                GLib.Variant(self._build_signature(full_args), full_args),
+                None,  # reply type
+                Gio.DBusCallFlags.NONE,
+                -1,    # timeout
+                fd_list,
+                None   # cancellable
+            )
+            
+            if result:
+                # Result is a tuple (return_value, out_fd_list)
+                return_value = result[0] if result else None
+                if return_value:
+                    return return_value
+            return None
+            
+        except Exception as e:
+            logger.error(f"Failed to call method with FD: {e}")
+            raise
+    
+    def _build_signature(self, args: list) -> str:
+        """Build D-Bus signature from arguments."""
+        signature = "("
+        for arg in args:
+            if isinstance(arg, dict):
+                signature += "a{sv}"
+            elif isinstance(arg, int):
+                # Check if it's an FD index (last argument)
+                if args.index(arg) == len(args) - 1:
+                    signature += "h"  # file descriptor handle
+                else:
+                    signature += "i"
+            elif isinstance(arg, str):
+                signature += "s"
+            elif isinstance(arg, bool):
+                signature += "b"
+            elif isinstance(arg, list):
+                signature += "as"  # assume string array
+            else:
+                signature += "v"  # variant
+        signature += ")"
+        return signature

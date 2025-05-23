@@ -28,6 +28,8 @@ Technical architecture and implementation details.
 - [**System Profiles**](architecture/SYSTEM-PROFILES.md) - Modular adaptation to different distros/DEs
 - [**Language Evaluation**](architecture/LANGUAGE-EVALUATION.md) - Why Python was chosen
 - [**Project Structure**](architecture/PROJECT-STRUCTURE.md) - Code organization
+- [**File Pipe Manager**](architecture/FILE-PIPE-MANAGER.md) - 📸 Temporary file management for screenshots & exports
+- [**Security Categories**](architecture/SECURITY-CATEGORIES.md) - Category-based security model
 
 ### 📚 Implementation Guides
 Practical guides for development and deployment.
@@ -39,6 +41,9 @@ Practical guides for development and deployment.
 - [**Context Examples**](guides/CONTEXT-EXAMPLES.md) - Real-world context scenarios
 - [**Discovered Capabilities**](guides/DISCOVERED-CAPABILITIES.md) - Live system exploration findings
 - [**Examples**](guides/EXAMPLES.md) - Usage examples and best practices
+- [**Screenshot Authorization**](guides/SCREENSHOT-AUTHORIZATION.md) - 📸 Enable screenshot capture on KDE
+- [**Application Support**](guides/APPLICATION-SUPPORT.md) - Linux applications with D-Bus support
+- [**Workstation Capabilities**](guides/WORKSTATION-CAPABILITIES.md) - Desktop/laptop features by safety level
 
 ## Quick Links
 

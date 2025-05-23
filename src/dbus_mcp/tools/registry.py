@@ -5,21 +5,25 @@ Registers MCP tools based on system profile and configuration.
 """
 
 import logging
-from typing import Dict, Any, TYPE_CHECKING
+from typing import Dict, Any, TYPE_CHECKING, Optional, List
 
 from mcp.server import FastMCP
 from mcp import Tool
 from mcp.types import TextContent
+from gi.repository import GLib
 
 from ..profiles.base import SystemProfile
 
 if TYPE_CHECKING:
     from ..security import SecurityPolicy
+    from ..dbus_manager import DBusManager
+    from ..file_manager import FilePipeManager
 
 logger = logging.getLogger(__name__)
 
 
-def register_core_tools(server: FastMCP, profile: SystemProfile, security: 'SecurityPolicy'):
+def register_core_tools(server: FastMCP, profile: SystemProfile, security: 'SecurityPolicy',
+                       dbus_manager: 'DBusManager', file_manager: 'FilePipeManager'):
     """
     Register the core set of tools that are always available.
     
@@ -29,6 +33,8 @@ def register_core_tools(server: FastMCP, profile: SystemProfile, security: 'Secu
         server: The FastMCP server instance
         profile: The system profile
         security: The server's security policy instance
+        dbus_manager: The server's D-Bus manager instance
+        file_manager: The server's file manager instance
     """
     
     # 1. Help tool - always available
@@ -405,6 +411,21 @@ def register_core_tools(server: FastMCP, profile: SystemProfile, security: 'Secu
             if not security.is_method_allowed(service, interface, method):
                 return f"Security: Method {interface}.{method} is not allowed"
             
+            # Check if this method requires user interaction
+            interaction_info = security.get_method_interaction_info(method)
+            interaction_warning = None
+            if interaction_info:
+                interaction_type = interaction_info['interaction_type']
+                if interaction_type == 'user_selection':
+                    logger.info(f"Method {method} requires user interaction: click/select")
+                    # Include warning in result
+                    interaction_warning = f"\n⚠️  This operation requires user interaction: Please click on the target when prompted.\n"
+                elif interaction_type == 'user_confirmation':
+                    logger.info(f"Method {method} requires user confirmation")
+                    interaction_warning = f"\n⚠️  This operation requires user confirmation.\n"
+                else:
+                    interaction_warning = f"\n⚠️  This operation requires user interaction.\n"
+            
             dbus = DBusManager()
             
             # Get the appropriate bus
@@ -441,14 +462,20 @@ def register_core_tools(server: FastMCP, profile: SystemProfile, security: 'Secu
                 
                 # Format the result
                 if result is None:
-                    return f"Method {method} called successfully (no return value)"
+                    response = f"Method {method} called successfully (no return value)"
                 elif isinstance(result, (list, tuple)):
                     lines = [f"Method {method} returned:"]
                     for i, item in enumerate(result):
                         lines.append(f"  [{i}]: {repr(item)}")
-                    return "\n".join(lines)
+                    response = "\n".join(lines)
                 else:
-                    return f"Method {method} returned: {repr(result)}"
+                    response = f"Method {method} returned: {repr(result)}"
+                
+                # Add interaction warning if applicable
+                if interaction_info:
+                    response = interaction_warning + response
+                    
+                return response
                     
             except Exception as e:
                 return f"Method call failed: {str(e)}"
@@ -460,6 +487,10 @@ def register_core_tools(server: FastMCP, profile: SystemProfile, security: 'Secu
     # Register profile-specific clipboard tools if available
     if profile.get_available_tools().get('clipboard', False):
         register_clipboard_tools(server, profile)
+    
+    # Register screenshot tools if running on a desktop
+    if profile.has_display():
+        register_screenshot_tools(server, profile, security, dbus_manager, file_manager)
     
     logger.info(f"Registered core tools for profile: {profile.name}")
 
@@ -540,3 +571,150 @@ def register_clipboard_tools(server: FastMCP, profile: SystemProfile):
         except Exception as e:
             logger.error(f"Failed to write clipboard: {e}")
             return f"Failed to write clipboard: {str(e)}"
+
+
+def register_screenshot_tools(server: FastMCP, profile: SystemProfile, security: 'SecurityPolicy',
+                             dbus_manager: 'DBusManager', file_manager: 'FilePipeManager'):
+    """Register screenshot capture tools."""
+    
+    @server.tool()
+    async def capture_active_window(
+        include_decorations: bool = True,
+        include_cursor: bool = False
+    ) -> Dict[str, Any]:
+        """
+        Capture a screenshot of the currently active window.
+        
+        Args:
+            include_decorations: Include window decorations (title bar, etc.)
+            include_cursor: Include mouse cursor in the screenshot
+            
+        Returns:
+            Dictionary with file reference and metadata
+        """
+        try:
+            # Create pipe for screenshot
+            fd, ref_id = file_manager.create_pipe("screenshot", "png")
+            
+            try:
+                # Prepare options
+                options = {}
+                if include_decorations:
+                    options['include-decoration'] = GLib.Variant('b', True)
+                if include_cursor:
+                    options['include-cursor'] = GLib.Variant('b', True)
+                
+                # Call screenshot method with file descriptor
+                result = dbus_manager.call_with_fd(
+                    'session',
+                    'org.kde.KWin.ScreenShot2',
+                    '/org/kde/KWin/ScreenShot2',
+                    'org.kde.KWin.ScreenShot2',
+                    'CaptureActiveWindow',
+                    [options],
+                    fd
+                )
+                
+                # Finalize file with metadata
+                file_manager.finalize_file(ref_id, {
+                    'type': 'image/png',
+                    'window': 'active',
+                    'result': result or {}
+                })
+                
+                file_info = file_manager.get_file_info(ref_id)
+                return {
+                    'reference': ref_id,
+                    'path': file_info.path,
+                    'size': file_info.metadata.get('size', 0),
+                    'type': 'image/png',
+                    'purpose': 'screenshot',
+                    'window': 'active'
+                }
+                
+            except Exception as e:
+                file_manager.mark_error(ref_id, str(e))
+                raise
+                
+        except Exception as e:
+            logger.error(f"Failed to capture screenshot: {e}")
+            return {
+                'error': f"Failed to capture screenshot: {str(e)}"
+            }
+    
+    @server.tool()
+    async def capture_screen(
+        screen_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Capture a screenshot of an entire screen.
+        
+        Args:
+            screen_name: Screen identifier (optional, captures active screen if not specified)
+            
+        Returns:
+            Dictionary with file reference and metadata
+        """
+        try:
+            # Create pipe for screenshot
+            fd, ref_id = file_manager.create_pipe("screenshot", "png")
+            
+            try:
+                # Prepare options
+                options = {}
+                
+                # Call appropriate method
+                if screen_name:
+                    result = dbus_manager.call_with_fd(
+                        'session',
+                        'org.kde.KWin.ScreenShot2',
+                        '/org/kde/KWin/ScreenShot2',
+                        'org.kde.KWin.ScreenShot2',
+                        'CaptureScreen',
+                        [screen_name, options],
+                        fd
+                    )
+                else:
+                    result = dbus_manager.call_with_fd(
+                        'session',
+                        'org.kde.KWin.ScreenShot2',
+                        '/org/kde/KWin/ScreenShot2',
+                        'org.kde.KWin.ScreenShot2',
+                        'CaptureActiveScreen',
+                        [options],
+                        fd
+                    )
+                
+                # Finalize file with metadata
+                file_manager.finalize_file(ref_id, {
+                    'type': 'image/png',
+                    'screen': screen_name or 'active',
+                    'result': result or {}
+                })
+                
+                file_info = file_manager.get_file_info(ref_id)
+                return {
+                    'reference': ref_id,
+                    'path': file_info.path,
+                    'size': file_info.metadata.get('size', 0),
+                    'type': 'image/png',
+                    'purpose': 'screenshot',
+                    'screen': screen_name or 'active'
+                }
+                
+            except Exception as e:
+                file_manager.mark_error(ref_id, str(e))
+                raise
+                
+        except Exception as e:
+            logger.error(f"Failed to capture screen: {e}")
+            return {
+                'error': f"Failed to capture screen: {str(e)}"
+            }
+    
+    @server.tool()
+    async def list_screenshot_files() -> List[Dict[str, Any]]:
+        """List all screenshot files captured in this session."""
+        return file_manager.list_files(purpose='screenshot')
+    
+    logger.info("Registered screenshot tools")

@@ -119,8 +119,9 @@ The Quick Start Guide includes:
 
 ## Core Tools
 
-The server starts with 7 essential tools for D-Bus interaction:
+The server starts with essential tools for D-Bus interaction:
 
+### Basic Tools (Always Available)
 1. **`help`** - Show available capabilities and tools
 2. **`notify`** - Send desktop notifications
 3. **`status`** - Get system status (battery, network, etc.)
@@ -129,7 +130,20 @@ The server starts with 7 essential tools for D-Bus interaction:
 6. **`introspect`** - Explore service interfaces and methods
 7. **`call_method`** - Call D-Bus methods (with security controls)
 
-Additional tools are available based on your system profile (e.g., `clipboard_read`/`clipboard_write` on KDE).
+### Desktop Tools (When Display Available)
+8. **`clipboard_read`/`clipboard_write`** - Clipboard access (KDE/GNOME)
+9. **`capture_active_window`** - Screenshot the active window 📸
+10. **`capture_screen`** - Screenshot entire screen 📸
+11. **`list_screenshot_files`** - List captured screenshots
+
+### 📸 Screenshot Capability (New!)
+The server can now capture screenshots through D-Bus, storing them as temporary files with reference IDs. This enables AI assistants to:
+- Capture windows or screens for visual context
+- Document UI states
+- Create visual bug reports
+- Guide users with annotated screenshots
+
+Screenshots are stored in `/tmp/dbus-mcp/` and tracked with metadata. See [Screenshot Authorization](docs/guides/SCREENSHOT-AUTHORIZATION.md) for KDE setup.
 
 ## Documentation
 

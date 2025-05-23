@@ -34,6 +34,7 @@ fi
 # Detect installation paths
 USER_SERVICE_DIR="$HOME/.config/systemd/user"
 INSTALL_DIR="$PROJECT_DIR"
+VENV_PYTHON="$INSTALL_DIR/venv/bin/python"
 
 echo "📍 Installation paths:"
 echo "   Project directory: $INSTALL_DIR"
@@ -99,6 +100,25 @@ systemctl --user enable "${SERVICE_NAME}.service"
 echo
 echo "✅ Service installation complete!"
 echo
+
+# Install desktop entry for screenshot authorization if on KDE
+if [[ "${XDG_CURRENT_DESKTOP}" == *"KDE"* ]] || [[ "${DESKTOP_SESSION}" == *"plasma"* ]]; then
+    DESKTOP_SOURCE="${SCRIPT_DIR}/../systemd/dbus-mcp-screenshot.desktop"
+    DESKTOP_DEST="/usr/share/applications/dbus-mcp-screenshot.desktop"
+    
+    if [ -f "${DESKTOP_SOURCE}" ]; then
+        echo "📸 KDE detected - Screenshot authorization setup:"
+        echo "   To enable screenshot capture, run:"
+        echo
+        echo "   sudo tee ${DESKTOP_DEST} << EOF"
+        cat "${DESKTOP_SOURCE}" | sed "s|Exec=/usr/bin/python|Exec=${VENV_PYTHON}|g"
+        echo "EOF"
+        echo
+        echo "   This grants D-Bus MCP permission to use KDE's screenshot interface."
+        echo
+    fi
+fi
+
 echo "Available commands:"
 echo "  Start service:   systemctl --user start ${SERVICE_NAME}"
 echo "  Stop service:    systemctl --user stop ${SERVICE_NAME}"

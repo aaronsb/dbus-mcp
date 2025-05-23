@@ -75,6 +75,10 @@ class DBusMCPServer:
         )
         self.security = SecurityPolicy(safety_level=self.config.safety_level)
         
+        # Initialize file manager for operations that create files
+        from .file_manager import FilePipeManager
+        self.file_manager = FilePipeManager()
+        
         # Statistics
         self.stats = {
             "start_time": datetime.now(),
