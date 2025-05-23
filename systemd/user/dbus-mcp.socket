@@ -1,0 +1,10 @@
+[Unit]
+Description=D-Bus MCP Server Socket
+Documentation=https://github.com/aaronsb/dbus-mcp
+
+[Socket]
+ListenStream=%t/dbus-mcp.sock
+SocketMode=0600
+
+[Install]
+WantedBy=sockets.target

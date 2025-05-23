@@ -2,6 +2,13 @@
 
 Welcome to the D-Bus MCP Server documentation. This project enables AI assistants to interact with Linux systems through D-Bus, from vacuum cleaners to supercomputers.
 
+## 🚀 Getting Started
+
+- **[Quick Start Guide](QUICKSTART.md)** - Get up and running in minutes
+- **[Installation Guide](QUICKSTART.md#installation)** - Detailed installation instructions  
+- **[Configuration Examples](QUICKSTART.md#configuring-ai-clients)** - Set up Claude Desktop, Claude Code, and VS Code
+- **[Troubleshooting](QUICKSTART.md#troubleshooting)** - Common issues and solutions
+
 ## Documentation Structure
 
 ### 📐 Design Documents

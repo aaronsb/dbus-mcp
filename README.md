@@ -49,69 +49,29 @@ AI Assistant <-> MCP Protocol <-> D-Bus MCP Server <-> D-Bus (Session/System)
 - **Hard-blocked operations**: System shutdown, disk format, package management
 - **Audit trail**: All operations logged with context
 
-## Installation
+## Quick Start
 
-### Prerequisites
+**📖 [Complete Quick Start Guide](docs/QUICKSTART.md)**
 
-1. **Python 3.9+** - The MCP SDK requires Python 3.9 or newer
-2. **D-Bus** - Should be installed on most Linux systems
-3. **System packages** - Some features require system-level Python packages:
-   ```bash
-   # Arch Linux
-   sudo pacman -S python-gobject python-systemd
+```bash
+# Clone and install
+git clone https://github.com/aaronsb/dbus-mcp.git
+cd dbus-mcp
+./quickstart.sh
 
-   # Ubuntu/Debian  
-   sudo apt install python3-gi python3-systemd
+# Test the installation
+python test_installation.py
 
-   # Fedora
-   sudo dnf install python3-gobject python3-systemd
-   ```
-
-### Quick Start
-
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/aaronsb/dbus-mcp.git
-   cd dbus-mcp
-   ```
-
-2. **Create virtual environment with system packages**:
-   ```bash
-   python -m venv venv --system-site-packages
-   source venv/bin/activate  # On Linux/Mac
-   ```
-
-3. **Install the package**:
-   ```bash
-   pip install -e .
-   ```
-
-4. **Check requirements**:
-   ```bash
-   python -m dbus_mcp --check-requirements
-   ```
-
-5. **Test the server**:
-   ```bash
-   python -m dbus_mcp --detect  # Show system information
-   python -m dbus_mcp --help    # Show all options
-   ```
-
-### Using with Claude Desktop
-
-Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS or `~/.config/claude/claude_desktop_config.json` on Linux):
-
-```json
-{
-  "mcpServers": {
-    "dbus": {
-      "command": "/path/to/dbus-mcp/venv/bin/python",
-      "args": ["-m", "dbus_mcp"],
-      "cwd": "/path/to/dbus-mcp"
-    }
-  }
-}
+# Optional: Install as systemd service
+./scripts/install-service.sh
 ```
+
+The Quick Start Guide includes:
+- System requirements and prerequisites
+- Multiple installation methods
+- Systemd service setup
+- Configuration for Claude Desktop, Claude Code, and VS Code
+- Troubleshooting tips
 
 ## Core Tools
 
