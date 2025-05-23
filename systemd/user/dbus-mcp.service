@@ -5,8 +5,15 @@ After=graphical-session.target
 
 [Service]
 Type=simple
-ExecStart=%h/Projects/ai/mcp/dbus-mcp/venv/bin/python -m dbus_mcp
-WorkingDirectory=%h/Projects/ai/mcp/dbus-mcp
+# Accept socket from systemd
+StandardInput=socket
+StandardOutput=socket
+StandardError=journal
+
+# Use the wrapper script which loads config
+ExecStart=/usr/local/bin/dbus-mcp-socket-wrapper
+
+# Don't restart on normal exit
 Restart=on-failure
 RestartSec=5
 
@@ -15,11 +22,17 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=read-only
-ReadWritePaths=%h/.cache %h/.local/share
+ReadWritePaths=/tmp/dbus-mcp %h/.cache %h/.local/share
 Environment="PATH=/usr/local/bin:/usr/bin:/bin"
 
 # D-Bus access
 Environment="DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/%U/bus"
 
+# Socket activation
+# Instances are started on-demand and can idle timeout
+KillMode=mixed
+TimeoutStopSec=5
+
 [Install]
-WantedBy=default.target
+# Not installed directly - started via socket activation
+# WantedBy=default.target

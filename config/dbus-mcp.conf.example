@@ -1,0 +1,32 @@
+# D-Bus MCP Server Configuration
+# Copy to /etc/dbus-mcp/config to customize system-wide settings
+
+# Safety level: high (default), medium, low
+# high   = Read-only operations (safest)
+# medium = Productivity features (recommended for development)
+# low    = System administration (use with caution)
+SAFETY_LEVEL="high"
+
+# Path to the dbus-mcp executable
+# Default: /usr/local/bin/dbus-mcp
+# DBUS_MCP_BIN="/usr/local/bin/dbus-mcp"
+
+# Additional arguments to pass to the server
+# EXTRA_ARGS="--log-level debug"
+
+# Logging configuration
+# LOG_LEVEL="info"  # debug, info, warning, error
+# LOG_FILE="/var/log/dbus-mcp.log"  # Optional file logging
+
+# Socket mode specific settings
+# SOCKET_TIMEOUT=300  # Idle timeout in seconds
+# MAX_CONNECTIONS=10  # Maximum concurrent connections
+
+# Security restrictions (future enhancement)
+# ALLOWED_USERS="alice,bob"  # Comma-separated list
+# ALLOWED_GROUPS="mcpusers"   # Comma-separated list
+
+# Feature flags (future enhancement)
+# ENABLE_SCREENSHOT="true"
+# ENABLE_CLIPBOARD="true"
+# ENABLE_SYSTEM_BUS="false"

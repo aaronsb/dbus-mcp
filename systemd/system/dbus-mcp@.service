@@ -1,0 +1,43 @@
+[Unit]
+Description=D-Bus MCP Server for %i
+Documentation=https://github.com/aaronsb/dbus-mcp
+After=multi-user.target
+
+[Service]
+Type=simple
+User=%i
+Group=%i
+
+# Accept socket from systemd
+StandardInput=socket
+StandardOutput=socket
+StandardError=journal
+
+# Use the wrapper script which loads config
+ExecStart=/usr/local/bin/dbus-mcp-socket-wrapper
+
+# Environment
+Environment="DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/%U/bus"
+Environment="HOME=/home/%i"
+Environment="USER=%i"
+
+# Restart policy
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=5
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/tmp/dbus-mcp
+# Additional paths can be added per-user
+
+# Resource limits
+LimitNPROC=64
+LimitNOFILE=1024
+
+[Install]
+# Not installed directly - use socket activation
+# WantedBy=multi-user.target

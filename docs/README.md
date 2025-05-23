@@ -34,6 +34,7 @@ Technical architecture and implementation details.
 ### 📚 Implementation Guides
 Practical guides for development and deployment.
 
+- [**Deployment**](guides/DEPLOYMENT.md) - 🚀 Development vs production deployment options
 - [**Tool Presentation**](guides/TOOL-PRESENTATION.md) - Strategy for presenting tools to AI clients
 - [**Tool Hierarchy**](guides/TOOL-HIERARCHY.md) - Progressive disclosure and tool organization
 - [**Security**](guides/SECURITY.md) - Comprehensive security architecture

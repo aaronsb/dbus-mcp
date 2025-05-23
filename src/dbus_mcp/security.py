@@ -94,6 +94,11 @@ class SecurityPolicy:
             'patterns': ['Screenshot*', 'Capture*', 'Grab*'],
             'safety_level': 'medium'
         },
+        'screen_brightness': {
+            'description': 'Adjust display brightness',
+            'patterns': ['*Brightness*', 'SetBrightness', 'AdjustBrightness*'],
+            'safety_level': 'medium'
+        },
         
         # 🤝 INTERACTIVE - Requires human collaboration
         'interactive_selection': {
