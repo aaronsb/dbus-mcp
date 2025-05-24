@@ -65,14 +65,26 @@ remove_systemd_user() {
         print_success "Stopped dbus-mcp.service"
     fi
     
+    if systemctl --user is-active dbus-mcp-standalone.service &>/dev/null; then
+        systemctl --user stop dbus-mcp-standalone.service
+        print_success "Stopped dbus-mcp-standalone.service"
+    fi
+    
     if systemctl --user is-enabled dbus-mcp.socket &>/dev/null; then
         systemctl --user disable dbus-mcp.socket
         print_success "Disabled dbus-mcp.socket"
     fi
     
+    if systemctl --user is-enabled dbus-mcp-standalone.service &>/dev/null; then
+        systemctl --user disable dbus-mcp-standalone.service
+        print_success "Disabled dbus-mcp-standalone.service"
+    fi
+    
     # Remove unit files
     rm -f "$SYSTEMD_USER_DIR/dbus-mcp.service"
     rm -f "$SYSTEMD_USER_DIR/dbus-mcp.socket"
+    rm -f "$SYSTEMD_USER_DIR/dbus-mcp-standalone.service"
+    rm -f "$SYSTEMD_USER_DIR/dbus-mcp@.service"
     
     # Reload systemd
     systemctl --user daemon-reload
@@ -107,6 +119,11 @@ remove_production() {
     if [ -f "$BINDIR/dbus-mcp-socket-wrapper" ]; then
         sudo rm -f "$BINDIR/dbus-mcp-socket-wrapper"
         print_success "Removed socket wrapper"
+    fi
+    
+    if [ -f "$BINDIR/dbus-mcp-server" ]; then
+        sudo rm -f "$BINDIR/dbus-mcp-server"
+        print_success "Removed server script"
     fi
     
     # Remove lib directory
