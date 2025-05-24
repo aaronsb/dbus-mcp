@@ -11,8 +11,10 @@ from typing import Optional, Dict, Any, List, Callable
 from datetime import datetime
 import json
 
-from mcp.server import Server
-from mcp import InitializeResult, ServerCapabilities, Tool
+from mcp.server.lowlevel import Server, NotificationOptions
+from mcp.server.models import InitializationOptions
+from mcp import Tool
+from mcp.types import TextContent
 from pydantic import BaseModel
 
 from .profiles.base import SystemProfile
@@ -115,7 +117,7 @@ class DBusMCPServer:
             return list(self.tools.values())
         
         @self.server.call_tool()
-        async def handle_call_tool(name: str, arguments: Dict[str, Any]) -> Any:
+        async def handle_call_tool(name: str, arguments: Dict[str, Any]) -> List[Any]:
             """Handle tool execution."""
             if name not in self.tool_handlers:
                 raise ValueError(f"Unknown tool: {name}")
@@ -131,7 +133,31 @@ class DBusMCPServer:
                 result = await handler(arguments)
                 
                 self.stats["successful_requests"] += 1
-                return result
+                
+                # Ensure result is a list of content items
+                if isinstance(result, dict):
+                    # Convert dict to text content
+                    import json
+                    from mcp.types import TextContent
+                    return [TextContent(
+                        type="text",
+                        text=json.dumps(result, indent=2)
+                    )]
+                elif isinstance(result, str):
+                    from mcp.types import TextContent
+                    return [TextContent(
+                        type="text",
+                        text=result
+                    )]
+                elif isinstance(result, list):
+                    return result
+                else:
+                    # Fallback
+                    from mcp.types import TextContent
+                    return [TextContent(
+                        type="text",
+                        text=str(result)
+                    )]
                 
             except Exception as e:
                 self.stats["failed_requests"] += 1
@@ -178,20 +204,19 @@ class DBusMCPServer:
     
     async def run_stdio(self):
         """Run the server with stdio transport."""
-        from mcp.server.stdio import stdio_server
+        from mcp import stdio_server
         
         async with stdio_server() as (read_stream, write_stream):
             await self.server.run(
                 read_stream,
                 write_stream,
-                InitializeResult(
-                    protocolVersion="2024-11-05",
-                    capabilities={
-                        "tools": {}
-                    },
-                    serverInfo={
-                        "name": self.config.name,
-                        "version": self.config.version
-                    }
+                InitializationOptions(
+                    server_name=self.config.name,
+                    server_version=self.config.version,
+                    capabilities=self.server.get_capabilities(
+                        notification_options=NotificationOptions(),
+                        experimental_capabilities={}
+                    ),
+                    instructions=self.config.description
                 )
             )
