@@ -31,7 +31,7 @@ def create_help_tool(server, profile: SystemProfile, security: SecurityPolicy) -
             f"Safety Level: {security.safety_level_emoji} {security.safety_level.upper()}",
             "",
             "Core Tools:",
-            "- help: Show this help message",
+            "- show_help: Show this help message",
             "- notify: Send desktop notification",
             "- status: Get system status overview",
             "- discover: Explore available tools by category",
@@ -68,7 +68,7 @@ def create_help_tool(server, profile: SystemProfile, security: SecurityPolicy) -
         return "\n".join(lines)
     
     tool = Tool(
-        name="help",
+        name="show_help",
         description="Show available D-Bus MCP capabilities and tools",
         inputSchema={
             "type": "object",

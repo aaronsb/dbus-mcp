@@ -130,38 +130,39 @@ class DBusMCPServer:
             try:
                 # Execute the tool handler
                 handler = self.tool_handlers[name]
+                logger.debug(f"Executing tool handler for: {name}")
                 result = await handler(arguments)
+                logger.debug(f"Tool {name} returned result type: {type(result)}")
                 
                 self.stats["successful_requests"] += 1
                 
                 # Ensure result is a list of content items
                 if isinstance(result, dict):
                     # Convert dict to text content
-                    import json
-                    from mcp.types import TextContent
-                    return [TextContent(
+                    content = [TextContent(
                         type="text",
                         text=json.dumps(result, indent=2)
                     )]
                 elif isinstance(result, str):
-                    from mcp.types import TextContent
-                    return [TextContent(
+                    content = [TextContent(
                         type="text",
                         text=result
                     )]
                 elif isinstance(result, list):
-                    return result
+                    content = result
                 else:
                     # Fallback
-                    from mcp.types import TextContent
-                    return [TextContent(
+                    content = [TextContent(
                         type="text",
                         text=str(result)
                     )]
                 
+                logger.debug(f"Tool {name} returning content: {content}")
+                return content
+                
             except Exception as e:
                 self.stats["failed_requests"] += 1
-                logger.error(f"Tool {name} failed: {e}")
+                logger.error(f"Tool {name} failed: {e}", exc_info=True)
                 raise
     
     def add_tool(self, tool: Tool, handler: Callable):

@@ -222,6 +222,16 @@ class SecurityPolicy:
         
         logger.info(f"Security policy initialized with safety level: {self.safety_level}")
     
+    @property
+    def safety_level_emoji(self) -> str:
+        """Get emoji representation of safety level."""
+        emoji_map = {
+            self.SAFETY_HIGH: "🟢",
+            self.SAFETY_MEDIUM: "🟡", 
+            self.SAFETY_LOW: "🔴"
+        }
+        return emoji_map.get(self.safety_level, "❓")
+    
     def check_operation(
         self,
         tool_name: str,
